@@ -1,7 +1,7 @@
 package com.backendeva.backend.services;
 
-import com.backendeva.backend.model.Usuario;
-import com.backendeva.backend.repository.UsuarioRepository;
+import com.backendeva.backend.model.User;
+import com.backendeva.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,35 +12,35 @@ import java.util.Optional;
 public class UsuarioService {
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private UserRepository userRepository;
 
-    public List<Usuario> findAll() {
-        return usuarioRepository.findAll();
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 
-    public Optional<Usuario> findById(Long id) {
-        return usuarioRepository.findById(id);
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 
-    public Usuario save(Usuario usuario) {
-        return usuarioRepository.save(usuario);
+    public User save(User user) {
+        return userRepository.save(user);
     }
 
     public void deleteById(Long id) {
-        usuarioRepository.deleteById(id);
+        userRepository.deleteById(id);
     }
 
-    public Usuario update(Long id, Usuario usuarioDetails) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario not found with id: " + id));
+    public User update(Long id, User userDetails) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
-        usuario.setNombre(usuarioDetails.getNombre());
-        usuario.setApellido(usuarioDetails.getApellido());
-        usuario.setEmail(usuarioDetails.getEmail());
-        usuario.setRol(usuarioDetails.getRol());
-        usuario.setActivo(usuarioDetails.isActivo());
-        usuario.setFechaRegistro(usuarioDetails.getFechaRegistro());
+        user.setNombre(userDetails.getNombre());
+        user.setApellido(userDetails.getApellido());
+        user.setEmail(userDetails.getEmail());
+        user.setRol(userDetails.getRol());
+        user.setActivo(userDetails.isActivo());
+        user.setFechaRegistro(userDetails.getFechaRegistro());
 
-        return usuarioRepository.save(usuario);
+        return userRepository.save(user);
     }
 }

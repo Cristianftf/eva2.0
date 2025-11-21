@@ -8,8 +8,10 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Entity
-@Table(name = "usuarios")
+@Table(name = "users") // Cambiado a "users" para evitar conflicto con el nombre de la clase
 @Getter
 @Setter
 public class User {
@@ -22,5 +24,7 @@ public class User {
     private String email;
     private String password;
     private String rol;
+    private boolean activo;
+    private LocalDate fechaRegistro;
 
 }

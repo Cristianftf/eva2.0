@@ -23,12 +23,16 @@ public class AuthController {
     @Autowired
     private JwtService jwtService;
 
+   
+
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(@RequestBody RegisterDto registerDto) {
         User user = authService.register(registerDto);
         String token = jwtService.generateToken(user);
         return ResponseEntity.ok(new AuthResponseDto(token, user));
     }
+    
+    
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody LoginDto loginDto) {

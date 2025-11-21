@@ -1,6 +1,6 @@
 package com.backendeva.backend.controller;
 
-import com.backendeva.backend.model.Usuario;
+import com.backendeva.backend.model.User;
 import com.backendeva.backend.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,25 +17,25 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @PostMapping
-    public Usuario createUsuario(@RequestBody Usuario usuario) {
-        return usuarioService.save(usuario);
+    public User createUsuario(@RequestBody User user) {
+        return usuarioService.save(user);
     }
 
     @GetMapping
-    public List<Usuario> getAllUsuarios() {
+    public List<User> getAllUsuarios() {
         return usuarioService.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) {
+    public ResponseEntity<User> getUsuarioById(@PathVariable Long id) {
         return usuarioService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> updateUsuario(@PathVariable Long id, @RequestBody Usuario usuarioDetails) {
-        return ResponseEntity.ok(usuarioService.update(id, usuarioDetails));
+    public ResponseEntity<User> updateUsuario(@PathVariable Long id, @RequestBody User userDetails) {
+        return ResponseEntity.ok(usuarioService.update(id, userDetails));
     }
 
     @DeleteMapping("/{id}")

@@ -30,7 +30,7 @@ export function CursosTab() {
     setLoading(true)
     setError(null)
 
-    const result = await cursosService.getAll()
+    const result = await cursosService.getAllCourses()
 
     if (result.success && result.data) {
       setCursos(result.data)

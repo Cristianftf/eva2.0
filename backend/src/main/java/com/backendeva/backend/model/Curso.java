@@ -18,6 +18,7 @@ public class Curso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    
     private String titulo;
     private String descripcion;
     private boolean activo;

@@ -41,4 +41,8 @@ public class CursoService {
 
         return cursoRepository.save(curso);
     }
+
+    public List<Curso> getByProfesor(Long idProfesor) {
+        return cursoRepository.findByProfesorId(idProfesor);
+    }
 }

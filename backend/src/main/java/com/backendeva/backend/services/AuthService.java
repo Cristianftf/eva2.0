@@ -29,6 +29,8 @@ public class AuthService {
         user.setEmail(registerDto.getEmail());
         user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
         user.setRol(registerDto.getRol());
+        user.setActivo(true); // Nuevo campo
+        user.setFechaRegistro(java.time.LocalDate.now()); // Nuevo campo
         return userRepository.save(user);
     }
 
