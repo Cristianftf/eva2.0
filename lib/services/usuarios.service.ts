@@ -1,31 +1,31 @@
 import { apiService } from "./api.service"
 import { API_ENDPOINTS } from "@/lib/config/api.config"
-import type { Usuario, ApiResponse } from "@/lib/types"
+import type { User, ApiResponse } from "@/lib/types"
 
 class UsuariosService {
   // Obtener todos los usuarios
-  async getAll(): Promise<ApiResponse<Usuario[]>> {
-    return apiService.get<Usuario[]>(API_ENDPOINTS.users.base)
+  async getAll(): Promise<ApiResponse<User[]>> {
+    return apiService.get<User[]>(API_ENDPOINTS.users.base)
   }
 
   // Obtener usuario por ID
-  async getById(id: string): Promise<ApiResponse<Usuario>> {
-    return apiService.get<Usuario>(API_ENDPOINTS.users.byId(id))
+  async getById(id: string): Promise<ApiResponse<User>> {
+    return apiService.get<User>(API_ENDPOINTS.users.byId(id))
   }
 
   // Obtener usuarios por rol
-  async getByRole(role: string): Promise<ApiResponse<Usuario[]>> {
-    return apiService.get<Usuario[]>(API_ENDPOINTS.users.byRole(role))
+  async getByRole(role: string): Promise<ApiResponse<User[]>> {
+    return apiService.get<User[]>(API_ENDPOINTS.users.byRole(role))
   }
 
   // Crear nuevo usuario
-  async create(data: Omit<Usuario, "id" | "fechaRegistro">): Promise<ApiResponse<Usuario>> {
-    return apiService.post<Usuario>(API_ENDPOINTS.users.base, data)
+  async create(data: Omit<User, "id" | "fechaRegistro">): Promise<ApiResponse<User>> {
+    return apiService.post<User>(API_ENDPOINTS.users.base, data)
   }
 
   // Actualizar usuario
-  async update(id: string, data: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
-    return apiService.put<Usuario>(API_ENDPOINTS.users.byId(id), data)
+  async update(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
+    return apiService.put<User>(API_ENDPOINTS.users.byId(id), data)
   }
 
   // Eliminar usuario

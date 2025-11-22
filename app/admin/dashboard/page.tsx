@@ -13,7 +13,7 @@ import { RecursosTab } from "@/components/admin/recursos-tab"
 import { EstadisticasTab } from "@/components/admin/estadisticas-tab"
 import { useAuth } from "@/lib/context/auth.context"
 import { usuariosService } from "@/lib/services/usuarios.service"
-import { cursosService } from "@/lib/services/courses.service"
+import { coursesService } from "@/lib/services/courses.service"
 import { recursosService } from "@/lib/services/recursos.service"
 import { estadisticasService } from "@/lib/services/estadisticas.service"
 
@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
     try {
       const [usuariosResult, cursosResult, recursosResult, statsResult] = await Promise.all([
         usuariosService.getAll(),
-        cursosService.getAll(),
+        coursesService.getAllCourses(),
         recursosService.getAll(),
         estadisticasService.getGenerales(),
       ])

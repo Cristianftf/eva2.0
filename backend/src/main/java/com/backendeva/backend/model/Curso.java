@@ -1,9 +1,6 @@
 package com.backendeva.backend.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,4 +20,8 @@ public class Curso {
     private String descripcion;
     private boolean activo;
     private LocalDate fechaCreacion;
+
+    @ManyToOne
+    @JoinColumn(name = "profesor_id")
+    private User profesor;
 }
