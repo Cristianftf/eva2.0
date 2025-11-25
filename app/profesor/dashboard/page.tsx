@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ProtectedRoute } from "@/components/layout/protected-route"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/lib/context/auth.context"
-import { cursosService } from "@/lib/services/courses.service"
-import { estadisticasService } from "@/lib/services/stats.service" // Importando el servicio de estadísticas
+import { coursesService } from "@/lib/services/courses.service"
+import { estadisticasService } from "@/lib/services/estadisticas.service"
 import { MisCursosProfesorTab } from "@/components/profesor/mis-cursos-profesor-tab"
 import { CrearCursoTab } from "@/components/profesor/crear-curso-tab"
 import { InformesTab } from "@/components/profesor/informes-tab"
@@ -35,7 +35,7 @@ export default function ProfesorDashboardPage() {
     setLoading(true)
 
     const [cursosResult, statsResult] = await Promise.all([
-      cursosService.getByProfesor(user.id),
+      coursesService.getByProfesor(user.id),
       estadisticasService.getProfesor(user.id),
     ])
 
@@ -58,18 +58,9 @@ export default function ProfesorDashboardPage() {
     setLoading(false)
   }
 
-  if (user?.rol !== "PROFESOR") {
-    return (
-      <DashboardLayout>
-        <Alert variant="destructive">
-          <AlertDescription>No tienes permisos para acceder a esta página</AlertDescription>
-        </Alert>
-      </DashboardLayout>
-    )
-  }
-
   return (
-    <DashboardLayout>
+    <ProtectedRoute allowedRoles={["PROFESOR"]}>
+      <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -146,5 +137,6 @@ export default function ProfesorDashboardPage() {
         </Tabs>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   )
 }

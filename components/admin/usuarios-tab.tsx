@@ -17,18 +17,27 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { usuariosService } from "@/lib/services/usuarios.service"
-import type { Usuario } from "@/lib/types"
+import type { User } from "@/lib/types"
 import { Search, UserPlus, Edit, Trash2, Loader2 } from "lucide-react"
+import { Label } from "@/components/ui/label"
 
 export function UsuariosTab() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
-  const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([])
+  const [usuarios, setUsuarios] = useState<User[]>([])
+  const [filteredUsuarios, setFilteredUsuarios] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedRol, setSelectedRol] = useState<string>("TODOS")
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null)
+  const [editingUsuario, setEditingUsuario] = useState<User | null>(null)
+  const [formData, setFormData] = useState({
+    email: "",
+    nombre: "",
+    apellido: "",
+    rol: "ESTUDIANTE" as User["rol"],
+    password: "",
+  })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadUsuarios()
@@ -84,6 +93,79 @@ export function UsuariosTab() {
     }
   }
 
+  const handleCreateUsuario = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    const result = await usuariosService.create({
+      ...formData,
+      activo: true,
+    })
+
+    if (result.success && result.data) {
+      setUsuarios([...usuarios, result.data])
+      setDialogOpen(false)
+      resetForm()
+    } else {
+      alert(result.error || "Error al crear usuario")
+    }
+
+    setSubmitting(false)
+  }
+
+  const handleEditUsuario = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUsuario) return
+
+    setSubmitting(true)
+
+    const result = await usuariosService.update(editingUsuario.id, {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      email: formData.email,
+      rol: formData.rol,
+    })
+
+    if (result.success && result.data) {
+      setUsuarios(usuarios.map(u => u.id === editingUsuario.id ? result.data! : u))
+      setDialogOpen(false)
+      setEditingUsuario(null)
+      resetForm()
+    } else {
+      alert(result.error || "Error al actualizar usuario")
+    }
+
+    setSubmitting(false)
+  }
+
+  const resetForm = () => {
+    setFormData({
+      email: "",
+      nombre: "",
+      apellido: "",
+      rol: "ESTUDIANTE",
+      password: "",
+    })
+  }
+
+  const openCreateDialog = () => {
+    setEditingUsuario(null)
+    resetForm()
+    setDialogOpen(true)
+  }
+
+  const openEditDialog = (usuario: User) => {
+    setEditingUsuario(usuario)
+    setFormData({
+      email: usuario.email,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      rol: usuario.rol,
+      password: "",
+    })
+    setDialogOpen(true)
+  }
+
   const getRolBadgeVariant = (rol: string) => {
     switch (rol) {
       case "ADMIN":
@@ -107,18 +189,96 @@ export function UsuariosTab() {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openCreateDialog}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Nuevo Usuario
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Crear Nuevo Usuario</DialogTitle>
-                <DialogDescription>Completa los datos del nuevo usuario</DialogDescription>
+                <DialogTitle>{editingUsuario ? "Editar Usuario" : "Crear Nuevo Usuario"}</DialogTitle>
+                <DialogDescription>
+                  {editingUsuario ? "Modifica los datos del usuario" : "Completa los datos del nuevo usuario"}
+                </DialogDescription>
               </DialogHeader>
-              {/* Form would go here */}
-              <p className="text-sm text-muted-foreground">Formulario de creación de usuario</p>
+              <form onSubmit={editingUsuario ? handleEditUsuario : handleCreateUsuario}>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nombre">Nombre</Label>
+                      <Input
+                        id="nombre"
+                        value={formData.nombre}
+                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="apellido">Apellido</Label>
+                      <Input
+                        id="apellido"
+                        value={formData.apellido}
+                        onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rol">Rol</Label>
+                    <Select
+                      value={formData.rol}
+                      onValueChange={(value) => setFormData({ ...formData, rol: value as Usuario["rol"] })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un rol" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ESTUDIANTE">Estudiante</SelectItem>
+                        <SelectItem value="PROFESOR">Profesor</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {!editingUsuario && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Contraseña</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {editingUsuario ? "Actualizando..." : "Creando..."}
+                      </>
+                    ) : (
+                      editingUsuario ? "Actualizar" : "Crear"
+                    )}
+                  </Button>
+                </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
@@ -197,7 +357,7 @@ export function UsuariosTab() {
                       <TableCell>{new Date(usuario.fechaRegistro).toLocaleDateString("es-ES")}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => setEditingUsuario(usuario)}>
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(usuario)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(usuario.id)}>

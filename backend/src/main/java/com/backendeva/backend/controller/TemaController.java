@@ -3,7 +3,6 @@ package com.backendeva.backend.controller;
 import com.backendeva.backend.model.Tema;
 import com.backendeva.backend.services.TemaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,28 +10,42 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/temas")
+@CrossOrigin(origins = "*")
 public class TemaController {
 
     @Autowired
     private TemaService temaService;
 
-    @GetMapping("/curso/{cursoId}")
-    public ResponseEntity<List<Tema>> getTemasByCursoId(@PathVariable Long cursoId) {
-        List<Tema> temas = temaService.findByCursoId(cursoId);
-        return ResponseEntity.ok(temas);
+    @PostMapping
+    public Tema createTema(@RequestBody Tema tema) {
+        return temaService.save(tema);
     }
 
-    @PostMapping
-    public ResponseEntity<Tema> createTema(@RequestBody Tema tema) {
-        Tema nuevoTema = temaService.create(tema);
-        return new ResponseEntity<>(nuevoTema, HttpStatus.CREATED);
+    @GetMapping
+    public List<Tema> getAllTemas() {
+        return temaService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tema> getTemaById(@PathVariable Long id) {
+        return temaService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Tema> updateTema(@PathVariable Long id, @RequestBody Tema temaDetails) {
+        return ResponseEntity.ok(temaService.update(id, temaDetails));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTema(@PathVariable Long id) {
-        temaService.delete(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        temaService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // Se pueden agregar métodos PUT/GET por ID si son necesarios en el futuro
+    @GetMapping("/curso/{cursoId}")
+    public List<Tema> getTemasByCurso(@PathVariable Long cursoId) {
+        return temaService.getByCurso(cursoId);
+    }
 }

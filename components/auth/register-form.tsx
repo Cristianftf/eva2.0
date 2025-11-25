@@ -24,7 +24,7 @@ export function RegisterForm() {
     confirmPassword: "",
     nombre: "",
     apellido: "",
-    rol: "estudiante" as UserRole,
+    rol: "ESTUDIANTE" as UserRole,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,8 +110,8 @@ export function RegisterForm() {
             <SelectValue placeholder="Selecciona tu rol" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="estudiante">Estudiante</SelectItem>
-            <SelectItem value="profesor">Profesor</SelectItem>
+            <SelectItem value="ESTUDIANTE">Estudiante</SelectItem>
+            <SelectItem value="PROFESOR">Profesor</SelectItem>
           </SelectContent>
         </Select>
       </div>

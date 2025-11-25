@@ -1,40 +1,83 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/lib/context/auth.context"
+import { cuestionariosService } from "@/lib/services/cuestionarios.service"
 import { Award, TrendingUp, CheckCircle2 } from "lucide-react"
 
-export function MisCalificacionesTab() {
-  // Datos de ejemplo - en producción vendrían del backend
-  const calificaciones = [
-    {
-      id: "1",
-      curso: "Introducción a la Programación",
-      cuestionario: "Evaluación Final",
-      calificacion: 85,
-      fecha: "2025-01-15",
-      estado: "aprobado",
-    },
-    {
-      id: "2",
-      curso: "Matemáticas Básicas",
-      cuestionario: "Examen Parcial",
-      calificacion: 92,
-      fecha: "2025-01-10",
-      estado: "aprobado",
-    },
-    {
-      id: "3",
-      curso: "Historia Universal",
-      cuestionario: "Quiz Tema 3",
-      calificacion: 78,
-      fecha: "2025-01-05",
-      estado: "aprobado",
-    },
-  ]
+interface Calificacion {
+  id: string
+  curso: string
+  cuestionario: string
+  calificacion: number
+  fecha: string
+  estado: string
+}
 
-  const promedioGeneral = Math.round(calificaciones.reduce((acc, c) => acc + c.calificacion, 0) / calificaciones.length)
+export function MisCalificacionesTab() {
+  const { user } = useAuth()
+  const [calificaciones, setCalificaciones] = useState<Calificacion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      loadCalificaciones()
+    }
+  }, [user])
+
+  const loadCalificaciones = async () => {
+    if (!user) return
+
+    setLoading(true)
+    setError(null)
+
+    const result = await cuestionariosService.getResultadosByEstudiante(user.id)
+
+    if (result.success && result.data) {
+      const formatted = result.data.map((item: any) => ({
+        id: item.id.toString(),
+        curso: item.curso,
+        cuestionario: item.cuestionario,
+        calificacion: Math.round(item.calificacion),
+        fecha: item.fecha,
+        estado: item.estado,
+      }))
+      setCalificaciones(formatted)
+    } else {
+      setError(result.error || "Error al cargar calificaciones")
+    }
+
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  const promedioGeneral = calificaciones.length > 0 ? Math.round(calificaciones.reduce((acc, c) => acc + c.calificacion, 0) / calificaciones.length) : 0
 
   return (
     <div className="space-y-6">
@@ -62,7 +105,7 @@ export function MisCalificacionesTab() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Evaluaciones Aprobadas</p>
-                <p className="text-2xl font-bold">{calificaciones.length}</p>
+                <p className="text-2xl font-bold">{calificaciones.filter(c => c.estado === "aprobado").length}</p>
               </div>
             </div>
 
@@ -71,8 +114,8 @@ export function MisCalificacionesTab() {
                 <TrendingUp className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Tendencia</p>
-                <p className="text-2xl font-bold text-green-500">+5%</p>
+                <p className="text-sm text-muted-foreground">Total Evaluaciones</p>
+                <p className="text-2xl font-bold">{calificaciones.length}</p>
               </div>
             </div>
           </div>
@@ -80,14 +123,25 @@ export function MisCalificacionesTab() {
       </Card>
 
       {/* Grades List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Historial de Calificaciones</CardTitle>
-          <CardDescription>Todas tus evaluaciones completadas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {calificaciones.map((cal) => (
+      {calificaciones.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Award className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No tienes calificaciones aún</h3>
+            <p className="text-muted-foreground text-center">
+              Completa cuestionarios en tus cursos para ver tus calificaciones aquí
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de Calificaciones</CardTitle>
+            <CardDescription>Todas tus evaluaciones completadas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {calificaciones.map((cal) => (
               <Card key={cal.id} className="border-2">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
@@ -119,10 +173,11 @@ export function MisCalificacionesTab() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

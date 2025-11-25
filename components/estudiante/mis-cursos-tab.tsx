@@ -87,9 +87,9 @@ export function MisCursosTab() {
       {inscripciones.map((inscripcion) => (
         <Card key={inscripcion.id} className="flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg">{inscripcion.curso?.titulo || "Curso"}</CardTitle>
+            <CardTitle className="text-lg">{inscripcion.cursoTitulo || "Curso"}</CardTitle>
             <CardDescription className="line-clamp-2">
-              {inscripcion.curso?.descripcion || "Sin descripción"}
+              {inscripcion.cursoDescripcion || "Sin descripción"}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-between space-y-4">

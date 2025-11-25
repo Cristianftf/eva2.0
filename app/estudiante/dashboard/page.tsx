@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ProtectedRoute } from "@/components/layout/protected-route"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/lib/context/auth.context"
 import { inscripcionesService } from "@/lib/services/inscripciones.service"
@@ -63,18 +63,9 @@ export default function EstudianteDashboardPage() {
     setLoading(false)
   }
 
-  if (user?.rol !== "ESTUDIANTE") {
-    return (
-      <DashboardLayout>
-        <Alert variant="destructive">
-          <AlertDescription>No tienes permisos para acceder a esta página</AlertDescription>
-        </Alert>
-      </DashboardLayout>
-    )
-  }
-
   return (
-    <DashboardLayout>
+    <ProtectedRoute allowedRoles={["ESTUDIANTE"]}>
+      <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -151,5 +142,6 @@ export default function EstudianteDashboardPage() {
         </Tabs>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   )
 }

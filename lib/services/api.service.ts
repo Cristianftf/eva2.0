@@ -6,28 +6,38 @@ import type { ApiResponse } from "@/lib/types"
 class ApiService {
   private baseUrl: string
   private timeout: number
+  private isRefreshing = false
 
   constructor() {
     this.baseUrl = API_BASE_URL
     this.timeout = API_TIMEOUT
   }
 
-  // Obtener token del localStorage
+  // Obtener token de las cookies
   private getToken(): string | null {
     if (typeof window === "undefined") return null
-    return localStorage.getItem("auth_token")
+    const cookies = document.cookie.split(";")
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=")
+      if (name === "auth_token") {
+        return decodeURIComponent(value)
+      }
+    }
+    return null
   }
 
-  // Guardar token en localStorage
+  // Guardar token en cookies
   private setToken(token: string): void {
     if (typeof window === "undefined") return
-    localStorage.setItem("auth_token", token)
+    const expires = new Date()
+    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 días
+    document.cookie = `auth_token=${encodeURIComponent(token)};expires=${expires.toUTCString()};path=/;SameSite=Lax`
   }
 
-  // Eliminar token del localStorage
+  // Eliminar token de las cookies
   private removeToken(): void {
     if (typeof window === "undefined") return
-    localStorage.removeItem("auth_token")
+    document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
   }
 
   // Método genérico para hacer peticiones
@@ -46,6 +56,7 @@ class ApiService {
           ...options.headers,
         },
         signal: controller.signal,
+        credentials: 'include',
       })
 
       clearTimeout(timeoutId)
@@ -58,6 +69,25 @@ class ApiService {
       const data = await response.json()
 
       if (!response.ok) {
+        // Si 401 y no está refrescando, intentar refresh
+        if (response.status === 401 && !this.isRefreshing) {
+          this.isRefreshing = true
+          try {
+            const refreshResponse = await this.request<{ token: string; user: any }>("/api/auth/refresh", {
+              method: "POST",
+            })
+            if (refreshResponse.success && refreshResponse.data) {
+              this.setToken(refreshResponse.data.token)
+              // Retry la petición original
+              this.isRefreshing = false
+              return this.request<T>(endpoint, options)
+            }
+          } catch {
+            // Falló refresh, continuar con error
+          } finally {
+            this.isRefreshing = false
+          }
+        }
         return {
           success: false,
           error: data.message || data.error || "Error en la petición",
@@ -146,6 +176,7 @@ class ApiService {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: formData,
+        credentials: 'include',
       })
 
       const data = await response.json()

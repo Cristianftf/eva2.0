@@ -2,8 +2,6 @@ package com.backendeva.backend.repository;
 
 import com.backendeva.backend.model.Inscripcion;
 import com.backendeva.backend.model.Curso;
-import com.backendeva.backend.model.Inscripcion;
-import com.backendeva.backend.model.Curso;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +21,9 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 
     @Query("SELECT AVG(i.progreso) FROM Inscripcion i WHERE i.estudiante.id = :estudianteId")
     Double avgProgresoByEstudianteId(@Param("estudianteId") Long estudianteId);
+
+    long countByCursoId(Long cursoId);
+
+    @Query("SELECT AVG(i.progreso) FROM Inscripcion i WHERE i.curso.id = :cursoId")
+    Double avgProgresoByCursoId(@Param("cursoId") Long cursoId);
 }

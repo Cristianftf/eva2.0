@@ -35,6 +35,7 @@ export function RecursosTab() {
     categoria: "",
   })
   const [submitting, setSubmitting] = useState(false)
+  const [editingRecurso, setEditingRecurso] = useState<RecursoConfiable | null>(null)
 
   useEffect(() => {
     loadRecursos()
@@ -59,17 +60,45 @@ export function RecursosTab() {
     e.preventDefault()
     setSubmitting(true)
 
-    const result = await recursosService.create(formData)
+    const result = editingRecurso
+      ? await recursosService.update(editingRecurso.id, formData)
+      : await recursosService.create(formData)
 
     if (result.success && result.data) {
-      setRecursos([...recursos, result.data])
+      if (editingRecurso) {
+        setRecursos(recursos.map(r => r.id === editingRecurso.id ? result.data! : r))
+      } else {
+        setRecursos([...recursos, result.data])
+      }
       setDialogOpen(false)
-      setFormData({ titulo: "", descripcion: "", url: "", categoria: "" })
+      resetForm()
+      setEditingRecurso(null)
     } else {
-      alert(result.error || "Error al crear recurso")
+      alert(result.error || `Error al ${editingRecurso ? 'actualizar' : 'crear'} recurso`)
     }
 
     setSubmitting(false)
+  }
+
+  const resetForm = () => {
+    setFormData({ titulo: "", descripcion: "", url: "", categoria: "" })
+  }
+
+  const openEditDialog = (recurso: RecursoConfiable) => {
+    setEditingRecurso(recurso)
+    setFormData({
+      titulo: recurso.titulo,
+      descripcion: recurso.descripcion || "",
+      url: recurso.url,
+      categoria: recurso.categoria || "",
+    })
+    setDialogOpen(true)
+  }
+
+  const openCreateDialog = () => {
+    setEditingRecurso(null)
+    resetForm()
+    setDialogOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -94,7 +123,7 @@ export function RecursosTab() {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openCreateDialog}>
                 <Plus className="mr-2 h-4 w-4" />
                 Nuevo Recurso
               </Button>
@@ -102,8 +131,10 @@ export function RecursosTab() {
             <DialogContent>
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
-                  <DialogTitle>Crear Nuevo Recurso</DialogTitle>
-                  <DialogDescription>Agrega un nuevo recurso educativo confiable</DialogDescription>
+                  <DialogTitle>{editingRecurso ? "Editar Recurso" : "Crear Nuevo Recurso"}</DialogTitle>
+                  <DialogDescription>
+                    {editingRecurso ? "Modifica la información del recurso" : "Agrega un nuevo recurso educativo confiable"}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -208,7 +239,7 @@ export function RecursosTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(recurso)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(recurso.id)}>

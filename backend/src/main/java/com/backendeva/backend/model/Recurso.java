@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -20,4 +21,5 @@ public class Recurso {
     private String descripcion;
     private String url;
     private String categoria;
+    private LocalDateTime fechaAgregado;
 }

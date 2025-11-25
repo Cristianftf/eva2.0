@@ -1,5 +1,6 @@
 package com.backendeva.backend.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,10 +22,12 @@ public class User {
     private Long id;
     private String nombre;
     private String apellido;
+    @Column(unique = true)
     private String email;
     private String password;
     private String rol;
     private boolean activo;
     private LocalDate fechaRegistro;
+    private String fotoPerfil;
 
 }

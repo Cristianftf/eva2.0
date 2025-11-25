@@ -1,7 +1,7 @@
 package com.backendeva.backend.services;
 
-import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.model.Tema;
+import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.repository.TemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,25 +15,35 @@ public class TemaService {
     @Autowired
     private TemaRepository temaRepository;
 
-    @Autowired
-    private CursoService cursoService; // Para obtener el objeto Curso
-
-    public List<Tema> findByCursoId(Long cursoId) {
-        Curso curso = cursoService.findById(cursoId).orElse(null);
-        if (curso == null) {
-            return List.of(); // O lanzar una excepción
-        }
-        return temaRepository.findByCurso(curso);
+    public List<Tema> findAll() {
+        return temaRepository.findAll();
     }
 
-    public Tema create(Tema tema) {
-        // Lógica adicional como asignar orden si es necesario
+    public Optional<Tema> findById(Long id) {
+        return temaRepository.findById(id);
+    }
+
+    public Tema save(Tema tema) {
         return temaRepository.save(tema);
     }
 
-    public void delete(Long id) {
+    public void deleteById(Long id) {
         temaRepository.deleteById(id);
     }
 
-    // Podrían agregarse métodos para actualizar y obtener por ID si son necesarios
+    public Tema update(Long id, Tema temaDetails) {
+        Tema tema = temaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tema not found with id: " + id));
+
+        tema.setTitulo(temaDetails.getTitulo());
+        tema.setDescripcion(temaDetails.getDescripcion());
+        tema.setOrden(temaDetails.getOrden());
+        tema.setCurso(temaDetails.getCurso());
+
+        return temaRepository.save(tema);
+    }
+
+    public List<Tema> getByCurso(Long cursoId) {
+        return temaRepository.findByCursoId(cursoId);
+    }
 }

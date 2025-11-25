@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/lib/context/auth.context"
-import { cursosService } from "@/lib/services/courses.service"
+import { coursesService } from "@/lib/services/courses.service"
 import { Loader2, BookOpen } from "lucide-react"
 
 export function CrearCursoTab() {

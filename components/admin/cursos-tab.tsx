@@ -7,9 +7,21 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cursosService } from "@/lib/services/courses.service"
+import { coursesService } from "@/lib/services/courses.service"
 import type { Curso } from "@/lib/types"
 import { Search, Edit, Trash2, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 
 export function CursosTab() {
   const [cursos, setCursos] = useState<Curso[]>([])
@@ -17,6 +29,13 @@ export function CursosTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingCurso, setEditingCurso] = useState<Curso | null>(null)
+  const [formData, setFormData] = useState({
+    titulo: "",
+    descripcion: "",
+  })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadCursos()
@@ -65,6 +84,42 @@ export function CursosTab() {
     } else {
       alert(result.error || "Error al eliminar curso")
     }
+  }
+
+  const handleEditCurso = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCurso) return
+
+    setSubmitting(true)
+
+    const result = await coursesService.update(editingCurso.id, formData)
+
+    if (result.success && result.data) {
+      setCursos(cursos.map(c => c.id === editingCurso.id ? result.data! : c))
+      setDialogOpen(false)
+      setEditingCurso(null)
+      resetForm()
+    } else {
+      alert(result.error || "Error al actualizar curso")
+    }
+
+    setSubmitting(false)
+  }
+
+  const resetForm = () => {
+    setFormData({
+      titulo: "",
+      descripcion: "",
+    })
+  }
+
+  const openEditDialog = (curso: Curso) => {
+    setEditingCurso(curso)
+    setFormData({
+      titulo: curso.titulo,
+      descripcion: curso.descripcion || "",
+    })
+    setDialogOpen(true)
   }
 
   return (
@@ -132,7 +187,7 @@ export function CursosTab() {
                       <TableCell>{new Date(curso.fechaCreacion).toLocaleDateString("es-ES")}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(curso)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(curso.id)}>
@@ -148,6 +203,52 @@ export function CursosTab() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Curso</DialogTitle>
+            <DialogDescription>Modifica la información del curso</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditCurso}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="titulo">Título</Label>
+                <Input
+                  id="titulo"
+                  value={formData.titulo}
+                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="descripcion">Descripción</Label>
+                <Textarea
+                  id="descripcion"
+                  value={formData.descripcion}
+                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  rows={4}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Actualizando...
+                  </>
+                ) : (
+                  "Actualizar"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

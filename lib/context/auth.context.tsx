@@ -23,9 +23,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Verificar si hay un usuario autenticado al cargar
     const checkAuth = async () => {
       if (authService.isAuthenticated()) {
-        const response = await authService.getCurrentUser()
-        if (response.success && response.data) {
-          setUser(response.data)
+        try {
+          const response = await authService.getCurrentUser()
+          if (response.success && response.data) {
+            setUser(response.data)
+          } else {
+            // Token inválido, limpiar
+            await authService.logout()
+          }
+        } catch (error) {
+          // Error de red o servidor, limpiar auth
+          await authService.logout()
         }
       }
       setLoading(false)

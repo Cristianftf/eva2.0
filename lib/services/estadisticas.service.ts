@@ -10,8 +10,8 @@ export interface EstadisticasGenerales {
 }
 
 export interface ActividadReciente {
-  id: string
-  tipo: "curso" | "usuario" | "cuestionario"
+  id: number
+  tipo: string
   descripcion: string
   fecha: string
 }

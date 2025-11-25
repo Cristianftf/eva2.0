@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ProtectedRoute } from "@/components/layout/protected-route"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Users, BookOpen, FileText, TrendingUp } from "lucide-react"
 import { UsuariosTab } from "@/components/admin/usuarios-tab"
@@ -80,18 +80,9 @@ export default function AdminDashboardPage() {
     setLoading(false)
   }
 
-  if (user?.rol !== "ADMIN") {
-    return (
-      <DashboardLayout>
-        <Alert variant="destructive">
-          <AlertDescription>No tienes permisos para acceder a esta página</AlertDescription>
-        </Alert>
-      </DashboardLayout>
-    )
-  }
-
   return (
-    <DashboardLayout>
+    <ProtectedRoute allowedRoles={["ADMIN"]}>
+      <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -197,5 +188,6 @@ export default function AdminDashboardPage() {
         </Tabs>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   )
 }

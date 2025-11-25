@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/inscripciones")
-@CrossOrigin(origins = "*")
 public class InscripcionController {
 
     @Autowired
@@ -35,5 +34,16 @@ public class InscripcionController {
         return new ResponseEntity<>(nuevaInscripcion, HttpStatus.CREATED);
     }
 
-    // Se pueden agregar otros métodos si son necesarios
+    @PatchMapping("/{id}/progreso")
+    public ResponseEntity<Inscripcion> actualizarProgreso(@PathVariable Long id, @RequestBody ProgresoRequest request) {
+        Inscripcion inscripcion = inscripcionService.actualizarProgreso(id, request.getProgreso());
+        return ResponseEntity.ok(inscripcion);
+    }
+
+    public static class ProgresoRequest {
+        private int progreso;
+
+        public int getProgreso() { return progreso; }
+        public void setProgreso(int progreso) { this.progreso = progreso; }
+    }
 }

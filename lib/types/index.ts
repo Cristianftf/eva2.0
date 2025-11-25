@@ -1,6 +1,6 @@
 // Tipos principales del sistema EVA
 
-export type UserRole = "admin" | "profesor" | "estudiante"
+export type UserRole = "ADMIN" | "PROFESOR" | "ESTUDIANTE"
 
 export interface User {
   id: string
@@ -8,7 +8,7 @@ export interface User {
   nombre: string
   apellido: string
   rol: UserRole
-  avatar?: string
+  fotoPerfil?: string
   fechaRegistro: string
   activo: boolean
 }
@@ -98,12 +98,19 @@ export interface RespuestaIndividual {
 
 export interface Inscripcion {
   id: string
-  cursoId: string
-  estudianteId: string
+  cursoId: number
+  cursoTitulo: string
+  cursoDescripcion: string
+  estudianteId: number
+  estudianteNombre: string
   fechaInscripcion: string
   progreso: number // 0-100
   completado: boolean
   fechaCompletado?: string
+  curso?: {
+    titulo: string
+    descripcion: string
+  }
 }
 
 export interface Mensaje {

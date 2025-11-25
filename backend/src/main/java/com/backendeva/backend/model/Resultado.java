@@ -23,4 +23,7 @@ public class Resultado {
     private User estudiante;
 
     private Double calificacion;
+
+    @Column(name = "fecha_completado")
+    private java.time.LocalDateTime fechaCompletado = java.time.LocalDateTime.now();
 }

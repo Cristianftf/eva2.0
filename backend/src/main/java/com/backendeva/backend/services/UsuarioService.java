@@ -26,6 +26,10 @@ public class UsuarioService {
         return userRepository.save(user);
     }
 
+    public List<User> findByRole(String role) {
+        return userRepository.findByRol(role);
+    }
+
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }
@@ -42,5 +46,24 @@ public class UsuarioService {
         user.setFechaRegistro(userDetails.getFechaRegistro());
 
         return userRepository.save(user);
+    }
+
+    public int cleanDuplicateUsers() {
+        List<User> allUsers = userRepository.findAll();
+        List<String> emails = allUsers.stream().map(User::getEmail).distinct().toList();
+        int deleted = 0;
+
+        for (String email : emails) {
+            List<User> usersWithEmail = userRepository.findAllByEmail(email);
+            if (usersWithEmail.size() > 1) {
+                // Keep the first one (smallest ID), delete others
+                usersWithEmail.stream().skip(1).forEach(user -> {
+                    userRepository.deleteById(user.getId());
+                });
+                deleted += usersWithEmail.size() - 1;
+            }
+        }
+
+        return deleted;
     }
 }

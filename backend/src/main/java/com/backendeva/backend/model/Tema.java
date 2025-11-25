@@ -22,9 +22,9 @@ public class Tema {
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;
 
-    // Relación con Lecciones (asumiendo que habrá una entidad Leccion)
-    @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Leccion> lecciones;
+    // Relación con Lecciones (comentado hasta implementar Leccion)
+    // @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<Leccion> lecciones;
 
     // Getters y Setters
     public Long getId() {
@@ -67,11 +67,11 @@ public class Tema {
         this.curso = curso;
     }
 
-    public List<Leccion> getLecciones() {
-        return lecciones;
-    }
+    // public List<Leccion> getLecciones() {
+    //     return lecciones;
+    // }
 
-    public void setLecciones(List<Leccion> lecciones) {
-        this.lecciones = lecciones;
-    }
+    // public void setLecciones(List<Leccion> lecciones) {
+    //     this.lecciones = lecciones;
+    // }
 }

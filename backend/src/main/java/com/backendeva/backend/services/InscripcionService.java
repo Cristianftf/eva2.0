@@ -1,5 +1,6 @@
 package com.backendeva.backend.services;
 
+import com.backendeva.backend.dto.InscripcionDto;
 import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.model.Inscripcion;
 import com.backendeva.backend.repository.InscripcionRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class InscripcionService {
@@ -34,5 +36,35 @@ public class InscripcionService {
         return inscripcionRepository.findByEstudianteId(estudianteId);
     }
 
-    // Podrían agregarse métodos para actualizar y obtener por ID si son necesarios
+    public List<InscripcionDto> findByEstudianteIdAsDto(Long estudianteId) {
+        List<Inscripcion> inscripciones = inscripcionRepository.findByEstudianteId(estudianteId);
+        return inscripciones.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private InscripcionDto convertToDto(Inscripcion inscripcion) {
+        return new InscripcionDto(
+                inscripcion.getId(),
+                inscripcion.getCurso().getId(),
+                inscripcion.getCurso().getTitulo(),
+                inscripcion.getCurso().getDescripcion(),
+                inscripcion.getEstudiante().getId(),
+                inscripcion.getEstudiante().getNombre() + " " + inscripcion.getEstudiante().getApellido(),
+                inscripcion.getProgreso(),
+                inscripcion.getFechaInscripcion(),
+                inscripcion.getProgreso() >= 100, // completado si progreso >= 100
+                null // fechaCompletado no implementada aún
+        );
+    }
+
+    public Inscripcion actualizarProgreso(Long id, int progreso) {
+        Optional<Inscripcion> optional = inscripcionRepository.findById(id);
+        if (optional.isPresent()) {
+            Inscripcion inscripcion = optional.get();
+            inscripcion.setProgreso(progreso);
+            return inscripcionRepository.save(inscripcion);
+        }
+        throw new RuntimeException("Inscripción no encontrada");
+    }
 }

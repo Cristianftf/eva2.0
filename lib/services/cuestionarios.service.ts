@@ -36,6 +36,11 @@ class CuestionariosService {
     return apiService.get(API_ENDPOINTS.quizzes.resultados(cuestionarioId))
   }
 
+  // Obtener resultados por estudiante
+  async getResultadosByEstudiante(estudianteId: string): Promise<ApiResponse<any[]>> {
+    return apiService.get<any[]>(API_ENDPOINTS.quizzes.resultadosByEstudiante(estudianteId))
+  }
+
   // Eliminar cuestionario
   async delete(id: string): Promise<ApiResponse<void>> {
     return apiService.delete<void>(API_ENDPOINTS.quizzes.byId(id))

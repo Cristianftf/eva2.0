@@ -22,4 +22,6 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     @Query("SELECT AVG(r.calificacion) FROM Resultado r WHERE r.cuestionario.curso.profesor.id = :profesorId")
     Double avgCalificacionesByProfesorId(@Param("profesorId") Long profesorId);
+
+    long countByActivo(boolean activo);
 }

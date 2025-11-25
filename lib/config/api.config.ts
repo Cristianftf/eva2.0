@@ -55,12 +55,13 @@ export const API_ENDPOINTS = {
     byCurso: (cursoId: string) => `/cuestionarios/curso/${cursoId}`,
     submit: (id: string) => `/cuestionarios/${id}/responder`,
     resultados: (id: string) => `/cuestionarios/${id}/resultados`,
+    resultadosByEstudiante: (estudianteId: string) => `/cuestionarios/resultados/estudiante/${estudianteId}`,
   },
 
   // Inscripciones
   enrollments: {
     base: "/inscripciones",
-    byEstudiante: (estudianteId: string) => `/inscripciones/estudiante/${estudianteId}`,
+    byEstudiante: (estudianteId: string) => `/cursos/inscripciones/estudiante/${estudianteId}`,
     byCurso: (cursoId: string) => `/inscripciones/curso/${cursoId}`,
     progreso: (id: string) => `/inscripciones/${id}/progreso`,
   },

@@ -19,7 +19,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push("/login")
+      router.push("/auth/login")
     }
 
     if (!loading && isAuthenticated && allowedRoles && user) {
