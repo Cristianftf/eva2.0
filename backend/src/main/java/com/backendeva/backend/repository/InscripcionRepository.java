@@ -8,12 +8,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> {
     List<Inscripcion> findByCurso(Curso curso);
     List<Inscripcion> findByCursoId(Long cursoId);
     List<Inscripcion> findByEstudianteId(Long estudianteId);
+    Optional<Inscripcion> findByEstudianteIdAndCursoId(Long estudianteId, Long cursoId);
 
     long countByEstudianteId(Long estudianteId);
 
@@ -26,4 +28,6 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 
     @Query("SELECT AVG(i.progreso) FROM Inscripcion i WHERE i.curso.id = :cursoId")
     Double avgProgresoByCursoId(@Param("cursoId") Long cursoId);
+
+    List<Inscripcion> findByCursoIdInAndEstado(List<Long> cursoIds, Inscripcion.EstadoInscripcion estado);
 }

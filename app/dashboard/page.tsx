@@ -10,19 +10,25 @@ export default function DashboardPage() {
   const { user, loading } = useAuth()
 
   useEffect(() => {
+    console.log("Dashboard useEffect:", { loading, user: user ? { rol: user.rol, nombre: user.nombre } : null })
     if (!loading && user) {
       // Redirigir según el rol del usuario
-      switch (user.rol) {
+      const rol = user.rol?.toUpperCase()
+      switch (rol) {
         case "ADMIN":
+          console.log("Redirigiendo a admin/dashboard")
           router.replace("/admin/dashboard")
           break
         case "PROFESOR":
+          console.log("Redirigiendo a profesor/dashboard")
           router.replace("/profesor/dashboard")
           break
         case "ESTUDIANTE":
+          console.log("Redirigiendo a estudiante/dashboard")
           router.replace("/estudiante/dashboard")
           break
         default:
+          console.log("Rol desconocido, redirigiendo a login:", user.rol)
           router.replace("/auth/login")
       }
     }

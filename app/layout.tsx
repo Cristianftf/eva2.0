@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   title: "EVA - Entorno Virtual de Aprendizaje",
   description:
     "Plataforma educativa completa para gestión de cursos, cuestionarios y comunicación entre estudiantes y profesores",
-    generator: 'v0.app'
+  generator: 'v0.app',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png'
+  }
 }
 
 export default function RootLayout({
@@ -19,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>

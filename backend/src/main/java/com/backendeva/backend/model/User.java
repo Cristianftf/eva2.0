@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users") // Cambiado a "users" para evitar conflicto con el nombre de la clase
@@ -28,6 +29,8 @@ public class User {
     private String rol;
     private boolean activo;
     private LocalDate fechaRegistro;
+    private LocalDateTime lastSeen;
     private String fotoPerfil;
+   
 
 }

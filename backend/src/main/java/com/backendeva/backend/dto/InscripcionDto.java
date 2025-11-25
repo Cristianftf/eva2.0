@@ -13,10 +13,12 @@ public class InscripcionDto {
     private LocalDateTime fechaInscripcion;
     private boolean completado;
     private LocalDateTime fechaCompletado;
+    private String estado;
 
     public InscripcionDto(Long id, Long cursoId, String cursoTitulo, String cursoDescripcion,
                          Long estudianteId, String estudianteNombre, int progreso,
-                         LocalDateTime fechaInscripcion, boolean completado, LocalDateTime fechaCompletado) {
+                         LocalDateTime fechaInscripcion, boolean completado, LocalDateTime fechaCompletado,
+                         String estado) {
         this.id = id;
         this.cursoId = cursoId;
         this.cursoTitulo = cursoTitulo;
@@ -27,6 +29,7 @@ public class InscripcionDto {
         this.fechaInscripcion = fechaInscripcion;
         this.completado = completado;
         this.fechaCompletado = fechaCompletado;
+        this.estado = estado;
     }
 
     // Getters y setters
@@ -59,4 +62,7 @@ public class InscripcionDto {
 
     public LocalDateTime getFechaCompletado() { return fechaCompletado; }
     public void setFechaCompletado(LocalDateTime fechaCompletado) { this.fechaCompletado = fechaCompletado; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

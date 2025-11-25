@@ -17,9 +17,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { temasService } from "@/lib/services/temas.service"
-import type { Tema } from "@/lib/types"
-import { Plus, Edit, Trash2, GripVertical, Upload } from "lucide-react"
+import { temasService, type CreateTemaDto } from "@/lib/services/temas.service"
+import { multimediaService } from "@/lib/services/multimedia.service"
+import type { Tema, MultimediaItem } from "@/lib/types"
+import { Plus, Edit, Trash2, GripVertical, Upload, FileText, Image, Video, Music } from "lucide-react"
 
 interface ContenidoCursoTabProps {
   cursoId: string
@@ -27,11 +28,19 @@ interface ContenidoCursoTabProps {
 
 export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
   const [temas, setTemas] = useState<Tema[]>([])
+  const [multimedia, setMultimedia] = useState<Record<string, MultimediaItem[]>>({})
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [selectedTema, setSelectedTema] = useState<Tema | null>(null)
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
+  })
+  const [uploadData, setUploadData] = useState({
+    file: null as File | null,
   })
 
   useEffect(() => {
@@ -41,41 +50,174 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
   const loadTemas = async () => {
     setLoading(true)
 
-    const result = await temasService.getByCurso(cursoId)
+    try {
+      const result = await temasService.getByCurso(cursoId)
 
-    if (result.success && result.data) {
-      setTemas(result.data)
+      if (result.success && result.data) {
+        setTemas(result.data)
+
+        // Cargar multimedia para cada tema
+        const multimediaData: Record<string, MultimediaItem[]> = {}
+        for (const tema of result.data) {
+          const multimediaResult = await multimediaService.getByTema(tema.id)
+          if (multimediaResult.success && multimediaResult.data) {
+            multimediaData[tema.id] = multimediaResult.data
+          }
+        }
+        setMultimedia(multimediaData)
+      }
+    } catch (error) {
+      console.error("Error loading temas:", error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitting(true)
 
-    const result = await temasService.create({
-      ...formData,
-      cursoId,
-      orden: temas.length + 1,
-    })
+    try {
+      const temaData: CreateTemaDto = {
+        ...formData,
+        cursoId,
+        orden: temas.length + 1,
+      }
 
-    if (result.success && result.data) {
-      setTemas([...temas, result.data])
-      setDialogOpen(false)
-      setFormData({ titulo: "", descripcion: "" })
-    } else {
-      alert(result.error || "Error al crear tema")
+      const result = await temasService.create(temaData)
+
+      if (result.success && result.data) {
+        setTemas([...temas, result.data])
+        setDialogOpen(false)
+        setFormData({ titulo: "", descripcion: "" })
+      } else {
+        alert(result.error || "Error al crear tema")
+      }
+    } catch (error) {
+      console.error("Error creating tema:", error)
+      alert("Error de conexión al crear tema")
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este tema?")) return
 
-    const result = await temasService.delete(id)
+    try {
+      const result = await temasService.delete(id)
 
-    if (result.success) {
-      setTemas(temas.filter((t) => t.id !== id))
+      if (result.success) {
+        setTemas(temas.filter((t) => t.id !== id))
+      } else {
+        alert(result.error || "Error al eliminar tema")
+      }
+    } catch (error) {
+      console.error("Error deleting tema:", error)
+      alert("Error de conexión al eliminar tema")
     }
+  }
+
+  const handleEditTema = (tema: Tema) => {
+    setSelectedTema(tema)
+    setFormData({
+      titulo: tema.titulo,
+      descripcion: tema.descripcion,
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleUpdateTema = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedTema) return
+
+    setSubmitting(true)
+
+    try {
+      const result = await temasService.update(selectedTema.id, {
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        orden: selectedTema.orden,
+        cursoId,
+      })
+
+      if (result.success && result.data) {
+        setTemas(temas.map((t) => (t.id === selectedTema.id ? result.data! : t)))
+        setEditDialogOpen(false)
+        setSelectedTema(null)
+        setFormData({ titulo: "", descripcion: "" })
+      } else {
+        alert(result.error || "Error al actualizar tema")
+      }
+    } catch (error) {
+      console.error("Error updating tema:", error)
+      alert("Error de conexión al actualizar tema")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleUploadMultimedia = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedTema || !uploadData.file) return
+
+    setSubmitting(true)
+
+    try {
+      const result = await multimediaService.upload(uploadData.file, selectedTema.id)
+
+      if (result.success && result.data) {
+        setMultimedia({
+          ...multimedia,
+          [selectedTema.id]: [...(multimedia[selectedTema.id] || []), result.data],
+        })
+        setUploadDialogOpen(false)
+        setSelectedTema(null)
+        setUploadData({ file: null })
+      } else {
+        alert(result.error || "Error al subir archivo")
+      }
+    } catch (error) {
+      console.error("Error uploading multimedia:", error)
+      alert("Error de conexión al subir archivo")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleOpenUpload = (tema: Tema) => {
+    setSelectedTema(tema)
+    setUploadDialogOpen(true)
+  }
+
+  const getMultimediaIcon = (tipo: string) => {
+    switch (tipo) {
+      case "video":
+        return <Video className="h-4 w-4" />
+      case "audio":
+        return <Music className="h-4 w-4" />
+      case "imagen":
+        return <Image className="h-4 w-4" />
+      default:
+        return <FileText className="h-4 w-4" />
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Temas del Curso</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -108,6 +250,7 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
                         value={formData.titulo}
                         onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                         required
+                        disabled={submitting}
                       />
                     </div>
                     <div className="space-y-2">
@@ -117,11 +260,95 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
                         value={formData.descripcion}
                         onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                         rows={3}
+                        disabled={submitting}
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit">Crear Tema</Button>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                    >
+                      {submitting ? "Creando..." : "Crear Tema"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Dialog para editar tema */}
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+              <DialogContent>
+                <form onSubmit={handleUpdateTema}>
+                  <DialogHeader>
+                    <DialogTitle>Editar Tema</DialogTitle>
+                    <DialogDescription>Modifica la información del tema</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-titulo">Título del Tema</Label>
+                      <Input
+                        id="edit-titulo"
+                        value={formData.titulo}
+                        onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                        required
+                        disabled={submitting}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-descripcion">Descripción</Label>
+                      <Textarea
+                        id="edit-descripcion"
+                        value={formData.descripcion}
+                        onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                        rows={3}
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                    >
+                      {submitting ? "Actualizando..." : "Actualizar Tema"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Dialog para subir multimedia */}
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+              <DialogContent>
+                <form onSubmit={handleUploadMultimedia}>
+                  <DialogHeader>
+                    <DialogTitle>Agregar Multimedia</DialogTitle>
+                    <DialogDescription>Sube un archivo multimedia al tema</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="file">Archivo</Label>
+                      <Input
+                        id="file"
+                        type="file"
+                        onChange={(e) => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })}
+                        required
+                        disabled={submitting}
+                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Tipos soportados: imágenes, videos, audio, documentos (PDF, DOC, TXT)
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={submitting || !uploadData.file}
+                    >
+                      {submitting ? "Subiendo..." : "Subir Archivo"}
+                    </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -152,17 +379,39 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
                         <p className="text-sm text-muted-foreground mb-3">{tema.descripcion}</p>
 
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleOpenUpload(tema)}>
                             <Upload className="mr-2 h-4 w-4" />
                             Agregar Multimedia
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditTema(tema)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(tema.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
+
+                        {/* Mostrar multimedia del tema */}
+                        {multimedia[tema.id] && multimedia[tema.id].length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <h5 className="text-sm font-medium">Archivos multimedia:</h5>
+                            <div className="space-y-1">
+                              {multimedia[tema.id].map((item) => (
+                                <div key={item.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  {getMultimediaIcon(item.tipo)}
+                                  <a
+                                    href={`http://localhost:8080${item.urlArchivo}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    {item.nombreArchivo}
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>

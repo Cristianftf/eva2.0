@@ -29,12 +29,12 @@ class EstadisticasService {
 
   // Obtener estadísticas de profesor
   async getProfesor(profesorId: string): Promise<ApiResponse<any>> {
-    return apiService.get<any>(`${API_ENDPOINTS.stats.base}/profesor/${profesorId}`)
+    return apiService.get<any>(API_ENDPOINTS.stats.profesor(profesorId))
   }
 
   // Obtener estadísticas de estudiante
   async getEstudiante(estudianteId: string): Promise<ApiResponse<any>> {
-    return apiService.get<any>(`${API_ENDPOINTS.stats.base}/estudiante/${estudianteId}`)
+    return apiService.get<any>(API_ENDPOINTS.stats.estudiante(estudianteId))
   }
 }
 

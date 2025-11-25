@@ -18,6 +18,10 @@ public class Curso {
     
     private String titulo;
     private String descripcion;
+    private String objetivos;
+    private Integer duracionEstimada; // en horas
+    private String nivel; // principiante, intermedio, avanzado
+    private String categoria;
     private boolean activo;
     private LocalDate fechaCreacion;
 

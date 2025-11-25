@@ -1,11 +1,14 @@
 package com.backendeva.backend.controller;
 
+import com.backendeva.backend.dto.CreateCursoDto;
 import com.backendeva.backend.dto.InscripcionDto;
 import com.backendeva.backend.dto.PaginatedResponseDto;
 import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.model.Inscripcion;
+import com.backendeva.backend.model.User;
 import com.backendeva.backend.services.CursoService;
 import com.backendeva.backend.services.InscripcionService;
+import com.backendeva.backend.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -26,6 +30,9 @@ public class CursoController {
 
     @Autowired
     private InscripcionService inscripcionService;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     @GetMapping
     public PaginatedResponseDto<Curso> getAllCursos(
@@ -45,8 +52,29 @@ public class CursoController {
 
     @PostMapping
     @PreAuthorize("hasRole('PROFESOR')")
-    public Curso createCurso(@RequestBody Curso curso) {
-        return cursoService.save(curso);
+    public ResponseEntity<Curso> createCurso(@RequestBody CreateCursoDto createCursoDto) {
+        try {
+            // Buscar el profesor por ID
+            User profesor = usuarioService.findById(Long.parseLong(createCursoDto.getProfesorId()))
+                    .orElseThrow(() -> new RuntimeException("Profesor not found with id: " + createCursoDto.getProfesorId()));
+
+            // Crear el curso
+            Curso curso = new Curso();
+            curso.setTitulo(createCursoDto.getTitulo());
+            curso.setDescripcion(createCursoDto.getDescripcion());
+            curso.setObjetivos(createCursoDto.getObjetivos());
+            curso.setDuracionEstimada(createCursoDto.getDuracionEstimada());
+            curso.setNivel(createCursoDto.getNivel());
+            curso.setCategoria(createCursoDto.getCategoria());
+            curso.setActivo(createCursoDto.isActivo());
+            curso.setFechaCreacion(LocalDate.now());
+            curso.setProfesor(profesor);
+
+            Curso savedCurso = cursoService.save(curso);
+            return ResponseEntity.ok(savedCurso);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")
@@ -68,23 +96,44 @@ public class CursoController {
         return cursoService.getByProfesor(idProfesor);
     }
 
-    @PostMapping("/{cursoId}/inscribir")
+    @PostMapping("/{cursoId}/solicitar-inscripcion")
     @PreAuthorize("hasRole('ESTUDIANTE')")
-    public ResponseEntity<Inscripcion> inscribirCurso(@PathVariable Long cursoId, @RequestBody InscripcionRequest request) {
-        Inscripcion inscripcion = new Inscripcion();
-        // Asumiendo que Inscripcion tiene campos estudiante y curso
-        // inscripcion.setEstudiante(request.getEstudianteId());
-        // inscripcion.setCurso(cursoId);
-        // inscripcion.setProgreso(0);
-        // return ResponseEntity.ok(inscripcionService.save(inscripcion));
-        // Placeholder
-        return ResponseEntity.ok(new Inscripcion());
+    public ResponseEntity<Inscripcion> solicitarInscripcion(@PathVariable Long cursoId, @RequestBody SolicitudInscripcionRequest request) {
+        try {
+            Inscripcion inscripcion = inscripcionService.solicitarInscripcion(request.getEstudianteId(), cursoId);
+            return ResponseEntity.ok(inscripcion);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    @PostMapping("/{cursoId}/desinscribir")
-    public ResponseEntity<Void> desinscribirCurso(@PathVariable Long cursoId, @RequestBody InscripcionRequest request) {
-        // inscripcionService.deleteByEstudianteAndCurso(request.getEstudianteId(), cursoId);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/aprobar-inscripcion/{inscripcionId}")
+    @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
+    public ResponseEntity<Inscripcion> aprobarInscripcion(@PathVariable Long inscripcionId) {
+        try {
+            Inscripcion inscripcion = inscripcionService.aprobarInscripcion(inscripcionId);
+            return ResponseEntity.ok(inscripcion);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/rechazar-inscripcion/{inscripcionId}")
+    @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
+    public ResponseEntity<Inscripcion> rechazarInscripcion(@PathVariable Long inscripcionId) {
+        try {
+            Inscripcion inscripcion = inscripcionService.rechazarInscripcion(inscripcionId);
+            return ResponseEntity.ok(inscripcion);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/solicitudes-pendientes")
+    @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
+    public ResponseEntity<List<InscripcionDto>> getSolicitudesPendientes(@RequestParam Long profesorId) {
+        List<InscripcionDto> solicitudes = inscripcionService.getSolicitudesPendientesPorProfesor(profesorId);
+        return ResponseEntity.ok(solicitudes);
     }
 
     @GetMapping("/inscripciones/estudiante/{estudianteId}")
@@ -94,7 +143,14 @@ public class CursoController {
         return ResponseEntity.ok(inscripciones);
     }
 
-    public static class InscripcionRequest {
+    @GetMapping("/{cursoId}/progreso/estudiante/{estudianteId}")
+    @PreAuthorize("hasRole('ESTUDIANTE') or hasRole('ADMIN')")
+    public ResponseEntity<Integer> getProgresoCurso(@PathVariable Long cursoId, @PathVariable Long estudianteId) {
+        int progreso = inscripcionService.getProgresoByEstudianteAndCurso(estudianteId, cursoId);
+        return ResponseEntity.ok(progreso);
+    }
+
+    public static class SolicitudInscripcionRequest {
         private Long estudianteId;
 
         public Long getEstudianteId() { return estudianteId; }

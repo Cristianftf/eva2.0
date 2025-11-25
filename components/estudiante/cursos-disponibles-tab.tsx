@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,14 +10,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/lib/context/auth.context"
 import { coursesService } from "@/lib/services/courses.service"
-import { inscripcionesService } from "@/lib/services/inscripciones.service"
 import type { Curso } from "@/lib/types"
 import { Search, BookOpen, Clock, Users } from "lucide-react"
 
 export function CursosDisponiblesTab() {
   const { user } = useAuth()
+  const router = useRouter()
   const [cursos, setCursos] = useState<Curso[]>([])
   const [filteredCursos, setFilteredCursos] = useState<Curso[]>([])
+  const [solicitudes, setSolicitudes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -34,12 +36,24 @@ export function CursosDisponiblesTab() {
     setLoading(true)
     setError(null)
 
-    const result = await cursosService.getAll()
+    try {
+      const cursosResult = await coursesService.getAllCourses()
 
-    if (result.success && result.data) {
-      setCursos(result.data.filter((c) => c.activo))
-    } else {
-      setError(result.error || "Error al cargar cursos")
+      if (cursosResult.success && cursosResult.data) {
+        setCursos(cursosResult.data.filter((c) => c.activo))
+      } else {
+        setError(cursosResult.error || "Error al cargar cursos")
+      }
+
+      // Cargar solicitudes del estudiante si está logueado
+      if (user) {
+        const solicitudesResult = await coursesService.getInscripcionesByEstudiante(user.id)
+        if (solicitudesResult.success && solicitudesResult.data) {
+          setSolicitudes(solicitudesResult.data)
+        }
+      }
+    } catch (err) {
+      setError("Error al cargar datos")
     }
 
     setLoading(false)
@@ -59,20 +73,59 @@ export function CursosDisponiblesTab() {
     setFilteredCursos(filtered)
   }
 
-  const handleInscribir = async (cursoId: string) => {
+  const handleSolicitarInscripcion = async (cursoId: string) => {
     if (!user) return
 
     setInscribiendo(cursoId)
 
-    const result = await inscripcionesService.inscribir(cursoId, user.id)
+    const result = await coursesService.solicitarInscripcion(cursoId, user.id)
 
     if (result.success) {
-      alert("Te has inscrito exitosamente al curso")
+      alert("Solicitud de inscripción enviada. Espera la aprobación del profesor.")
+      // Recargar cursos para actualizar estado
+      loadCursos()
     } else {
-      alert(result.error || "Error al inscribirse al curso")
+      alert(result.error || "Error al enviar solicitud de inscripción")
     }
 
     setInscribiendo(null)
+  }
+
+  const getEstadoSolicitud = (cursoId: string) => {
+    const solicitud = solicitudes.find(s => s.cursoId === cursoId)
+    return solicitud?.estado || null
+  }
+
+  const getBadgeVariant = (estado: string | null) => {
+    switch (estado) {
+      case 'PENDIENTE': return 'secondary'
+      case 'APROBADA': return 'default'
+      case 'RECHAZADA': return 'destructive'
+      default: return 'outline'
+    }
+  }
+
+  const getBadgeText = (estado: string | null) => {
+    switch (estado) {
+      case 'PENDIENTE': return 'Solicitud Pendiente'
+      case 'APROBADA': return 'Inscrito'
+      case 'RECHAZADA': return 'Solicitud Rechazada'
+      default: return 'Disponible'
+    }
+  }
+
+  const getButtonText = (estado: string | null, inscribiendo: boolean, progreso: number = 0) => {
+    if (inscribiendo) return 'Enviando...'
+    switch (estado) {
+      case 'PENDIENTE': return 'Solicitud Enviada'
+      case 'APROBADA': return progreso > 0 ? 'Continuar Curso' : 'Empezar Curso'
+      case 'RECHAZADA': return 'Solicitar de Nuevo'
+      default: return 'Solicitar Inscripción'
+    }
+  }
+
+  const canSolicitar = (estado: string | null) => {
+    return !estado || estado === 'RECHAZADA'
   }
 
   if (loading) {
@@ -118,38 +171,53 @@ export function CursosDisponiblesTab() {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCursos.map((curso) => (
-            <Card key={curso.id} className="flex flex-col">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <BookOpen className="h-6 w-6 text-primary flex-shrink-0" />
-                  <Badge variant="secondary">Disponible</Badge>
-                </div>
-                <CardTitle className="text-lg">{curso.titulo}</CardTitle>
-                <CardDescription className="line-clamp-3">{curso.descripcion}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-between space-y-4">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>12h</span>
+          {filteredCursos.map((curso) => {
+            const estadoSolicitud = getEstadoSolicitud(curso.id)
+            return (
+              <Card key={curso.id} className="flex flex-col">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <BookOpen className="h-6 w-6 text-primary flex-shrink-0" />
+                    <Badge variant={getBadgeVariant(estadoSolicitud)}>
+                      {getBadgeText(estadoSolicitud)}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>45 estudiantes</span>
+                  <CardTitle className="text-lg">{curso.titulo}</CardTitle>
+                  <CardDescription className="line-clamp-3">{curso.descripcion}</CardDescription>
+                  {curso.objetivos && (
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                      <strong>Objetivos:</strong> {curso.objetivos}
+                    </p>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col justify-between space-y-4">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{curso.duracionEstimada || 0}h</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{curso.nivel || 'Principiante'}</span>
+                    </div>
+                    {curso.categoria && (
+                      <Badge variant="outline" className="text-xs">
+                        {curso.categoria}
+                      </Badge>
+                    )}
                   </div>
-                </div>
 
-                <Button
-                  className="w-full"
-                  onClick={() => handleInscribir(curso.id)}
-                  disabled={inscribiendo === curso.id}
-                >
-                  {inscribiendo === curso.id ? "Inscribiendo..." : "Inscribirse"}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <Button
+                    className="w-full"
+                    onClick={() => estadoSolicitud === 'APROBADA' ? router.push(`/estudiante/curso/${curso.id}`) : handleSolicitarInscripcion(curso.id)}
+                    disabled={inscribiendo === curso.id || !canSolicitar(estadoSolicitud)}
+                  >
+                    {getButtonText(estadoSolicitud, inscribiendo === curso.id, estadoSolicitud === 'APROBADA' ? (solicitudes.find(s => s.cursoId === parseInt(curso.id))?.progreso || 0) : 0)}
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

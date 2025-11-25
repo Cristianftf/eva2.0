@@ -41,7 +41,7 @@ export default function ProfesorCursoDetallePage() {
 
     try {
       const [cursoResult, temasResult, inscripcionesResult] = await Promise.all([
-        cursosService.getById(cursoId),
+        coursesService.getCourseById(cursoId),
         temasService.getByCurso(cursoId),
         inscripcionesService.getByCurso(cursoId),
       ])
@@ -59,6 +59,7 @@ export default function ProfesorCursoDetallePage() {
       })
     } catch (err) {
       setError("Error al cargar datos del curso")
+      console.error("Error loading course data:", err)
     }
 
     setLoading(false)

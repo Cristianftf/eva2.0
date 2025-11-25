@@ -23,6 +23,10 @@ export function CrearCursoTab() {
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
+    objetivos: "",
+    duracionEstimada: "",
+    nivel: "principiante",
+    categoria: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,25 +37,35 @@ export function CrearCursoTab() {
     setError(null)
     setSuccess(false)
 
-    const result = await cursosService.create({
-      ...formData,
-      profesorId: user.id,
-      activo: true,
-    })
+    try {
+      const result = await coursesService.createCourse({
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        objetivos: formData.objetivos,
+        duracionEstimada: parseInt(formData.duracionEstimada) || null,
+        nivel: formData.nivel,
+        categoria: formData.categoria,
+        profesorId: user.id,
+        activo: true,
+      })
 
-    if (result.success && result.data) {
-      setSuccess(true)
-      setFormData({ titulo: "", descripcion: "" })
+      if (result.success && result.data) {
+        setSuccess(true)
+        setFormData({ titulo: "", descripcion: "", objetivos: "", duracionEstimada: "", nivel: "principiante", categoria: "" })
 
-      // Redirigir al curso creado después de 2 segundos
-      setTimeout(() => {
-        router.push(`/profesor/curso/${result.data.id}`)
-      }, 2000)
-    } else {
-      setError(result.error || "Error al crear curso")
+        // Redirigir al curso creado después de 2 segundos
+        setTimeout(() => {
+          router.push(`/profesor/curso/${result.data.id}`)
+        }, 2000)
+      } else {
+        setError(result.error || "Error al crear curso")
+      }
+    } catch (err) {
+      setError("Error de conexión al crear curso")
+      console.error("Error creating course:", err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -109,6 +123,58 @@ export function CrearCursoTab() {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="objetivos">Objetivos del Curso</Label>
+            <Textarea
+              id="objetivos"
+              placeholder="¿Qué lograrán los estudiantes al completar este curso?"
+              value={formData.objetivos}
+              onChange={(e) => setFormData({ ...formData, objetivos: e.target.value })}
+              rows={4}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="duracion">Duración Estimada (horas)</Label>
+              <Input
+                id="duracion"
+                type="number"
+                placeholder="ej: 20"
+                value={formData.duracionEstimada}
+                onChange={(e) => setFormData({ ...formData, duracionEstimada: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nivel">Nivel</Label>
+              <select
+                id="nivel"
+                value={formData.nivel}
+                onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
+                className="w-full p-2 border rounded"
+                disabled={loading}
+              >
+                <option value="principiante">Principiante</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzado">Avanzado</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="categoria">Categoría</Label>
+            <Input
+              id="categoria"
+              placeholder="ej: Programación, Matemáticas, Idiomas..."
+              value={formData.categoria}
+              onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+              disabled={loading}
+            />
+          </div>
+
           <div className="flex gap-4">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? (
@@ -123,7 +189,7 @@ export function CrearCursoTab() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFormData({ titulo: "", descripcion: "" })}
+              onClick={() => setFormData({ titulo: "", descripcion: "", objetivos: "", duracionEstimada: "", nivel: "principiante", categoria: "" })}
               disabled={loading}
             >
               Limpiar

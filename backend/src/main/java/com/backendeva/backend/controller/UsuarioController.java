@@ -28,6 +28,15 @@ public class UsuarioController {
         return usuarioService.findAll();
     }
 
+    @GetMapping("/chat-contacts")
+    @PreAuthorize("hasRole('ESTUDIANTE') or hasRole('PROFESOR') or hasRole('ADMIN')")
+    public List<User> getChatContacts() {
+        // Retornar todos los usuarios activos excepto el usuario actual (se filtra en frontend)
+        return usuarioService.findAll().stream()
+                .filter(u -> u.isActivo() && !u.getRol().equals("ADMIN"))
+                .toList();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> getUsuarioById(@PathVariable Long id) {
@@ -60,5 +69,38 @@ public class UsuarioController {
     public ResponseEntity<String> cleanDuplicateUsers() {
         int deleted = usuarioService.cleanDuplicateUsers();
         return ResponseEntity.ok("Se eliminaron " + deleted + " usuarios duplicados");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+        // Extraer email del JWT para debugging
+        try {
+            String email = extractEmailFromToken(token.replace("Bearer ", ""));
+            User user = usuarioService.findAll().stream()
+                    .filter(u -> u.getEmail().equals(email))
+                    .findFirst()
+                    .orElse(null);
+            return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private String extractEmailFromToken(String token) {
+        // Simple extraction for debugging - in production use proper JWT parsing
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length >= 2) {
+                String payload = new String(java.util.Base64.getDecoder().decode(parts[1]));
+                if (payload.contains("\"sub\":\"")) {
+                    int start = payload.indexOf("\"sub\":\"") + 7;
+                    int end = payload.indexOf("\"", start);
+                    return payload.substring(start, end);
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return null;
     }
 }

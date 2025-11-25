@@ -19,9 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
 
 export function CursosTab() {
   const [cursos, setCursos] = useState<Curso[]>([])
@@ -49,15 +47,20 @@ export function CursosTab() {
     setLoading(true)
     setError(null)
 
-    const result = await cursosService.getAllCourses()
+    try {
+      const result = await coursesService.getAllCourses()
 
-    if (result.success && result.data) {
-      setCursos(result.data)
-    } else {
-      setError(result.error || "Error al cargar cursos")
+      if (result.success && result.data) {
+        setCursos(result.data)
+      } else {
+        setError(result.error || "Error al cargar cursos")
+      }
+    } catch (err) {
+      setError("Error de conexión al cargar cursos")
+      console.error("Error loading courses:", err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const filterCursos = () => {
@@ -77,12 +80,17 @@ export function CursosTab() {
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este curso?")) return
 
-    const result = await cursosService.delete(id)
+    try {
+      const result = await coursesService.deleteCourse(id)
 
-    if (result.success) {
-      setCursos(cursos.filter((c) => c.id !== id))
-    } else {
-      alert(result.error || "Error al eliminar curso")
+      if (result.success) {
+        setCursos(cursos.filter((c) => c.id !== id))
+      } else {
+        alert(result.error || "Error al eliminar curso")
+      }
+    } catch (err) {
+      alert("Error de conexión al eliminar curso")
+      console.error("Error deleting course:", err)
     }
   }
 
@@ -92,18 +100,23 @@ export function CursosTab() {
 
     setSubmitting(true)
 
-    const result = await coursesService.update(editingCurso.id, formData)
+    try {
+      const result = await coursesService.updateCourse(editingCurso.id, formData)
 
-    if (result.success && result.data) {
-      setCursos(cursos.map(c => c.id === editingCurso.id ? result.data! : c))
-      setDialogOpen(false)
-      setEditingCurso(null)
-      resetForm()
-    } else {
-      alert(result.error || "Error al actualizar curso")
+      if (result.success && result.data) {
+        setCursos(cursos.map(c => c.id === editingCurso.id ? result.data! : c))
+        setDialogOpen(false)
+        setEditingCurso(null)
+        resetForm()
+      } else {
+        alert(result.error || "Error al actualizar curso")
+      }
+    } catch (err) {
+      alert("Error de conexión al actualizar curso")
+      console.error("Error updating course:", err)
+    } finally {
+      setSubmitting(false)
     }
-
-    setSubmitting(false)
   }
 
   const resetForm = () => {

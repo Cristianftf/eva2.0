@@ -30,26 +30,36 @@ export function MisCursosProfesorTab() {
     setLoading(true)
     setError(null)
 
-    const result = await cursosService.getByProfesor(user.id)
+    try {
+      const result = await coursesService.getCoursesByProfesor(user.id)
 
-    if (result.success && result.data) {
-      setCursos(result.data)
-    } else {
-      setError(result.error || "Error al cargar cursos")
+      if (result.success && result.data) {
+        setCursos(result.data)
+      } else {
+        setError(result.error || "Error al cargar cursos")
+      }
+    } catch (err) {
+      setError("Error de conexión al cargar cursos")
+      console.error("Error loading professor courses:", err)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este curso?")) return
 
-    const result = await cursosService.delete(id)
+    try {
+      const result = await coursesService.deleteCourse(id)
 
-    if (result.success) {
-      setCursos(cursos.filter((c) => c.id !== id))
-    } else {
-      alert(result.error || "Error al eliminar curso")
+      if (result.success) {
+        setCursos(cursos.filter((c) => c.id !== id))
+      } else {
+        alert(result.error || "Error al eliminar curso")
+      }
+    } catch (err) {
+      alert("Error de conexión al eliminar curso")
+      console.error("Error deleting course:", err)
     }
   }
 

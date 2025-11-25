@@ -44,7 +44,13 @@ public class UsuarioService {
         user.setRol(userDetails.getRol());
         user.setActivo(userDetails.isActivo());
         user.setFechaRegistro(userDetails.getFechaRegistro());
+        user.setLastSeen(userDetails.getLastSeen());
+        user.setLastSeen(userDetails.getLastSeen());
 
+        return userRepository.save(user);
+    }
+
+    public User updateUser(User user) {
         return userRepository.save(user);
     }
 

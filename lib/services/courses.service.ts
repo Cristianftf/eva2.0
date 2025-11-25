@@ -5,8 +5,15 @@ import { API_ENDPOINTS } from "@/lib/config/api.config"
 import type { Curso, Tema, Inscripcion, ApiResponse, PaginatedResponse } from "@/lib/types"
 
 class CoursesService {
-  async getAllCourses(page = 1, pageSize = 10): Promise<ApiResponse<PaginatedResponse<Curso>>> {
-    return apiService.get<PaginatedResponse<Curso>>(`${API_ENDPOINTS.courses.base}?page=${page}&pageSize=${pageSize}`)
+  async getAllCourses(page = 1, pageSize = 1000): Promise<ApiResponse<Curso[]>> {
+    const result = await apiService.get<PaginatedResponse<Curso>>(`${API_ENDPOINTS.courses.base}?page=${page}&pageSize=${pageSize}`)
+    if (result.success && result.data) {
+      return {
+        success: true,
+        data: result.data.data
+      }
+    }
+    return result as any
   }
 
   async getCourseById(id: string): Promise<ApiResponse<Curso>> {
@@ -29,8 +36,24 @@ class CoursesService {
     return apiService.delete<void>(API_ENDPOINTS.courses.byId(id))
   }
 
-  async enrollCourse(cursoId: string): Promise<ApiResponse<Inscripcion>> {
-    return apiService.post<Inscripcion>(API_ENDPOINTS.courses.inscribir(cursoId))
+  async solicitarInscripcion(cursoId: string, estudianteId: string): Promise<ApiResponse<Inscripcion>> {
+    return apiService.post<Inscripcion>(API_ENDPOINTS.courses.solicitarInscripcion(cursoId), { estudianteId })
+  }
+
+  async aprobarInscripcion(inscripcionId: string): Promise<ApiResponse<Inscripcion>> {
+    return apiService.post<Inscripcion>(API_ENDPOINTS.courses.aprobarInscripcion(inscripcionId))
+  }
+
+  async rechazarInscripcion(inscripcionId: string): Promise<ApiResponse<Inscripcion>> {
+    return apiService.post<Inscripcion>(API_ENDPOINTS.courses.rechazarInscripcion(inscripcionId))
+  }
+
+  async getSolicitudesPendientes(profesorId: string): Promise<ApiResponse<Inscripcion[]>> {
+    return apiService.get<Inscripcion[]>(API_ENDPOINTS.courses.base + `/solicitudes-pendientes?profesorId=${profesorId}`)
+  }
+
+  async getInscripcionesByEstudiante(estudianteId: string): Promise<ApiResponse<Inscripcion[]>> {
+    return apiService.get<Inscripcion[]>(API_ENDPOINTS.courses.inscripcionesByEstudiante(estudianteId))
   }
 
   async unenrollCourse(cursoId: string): Promise<ApiResponse<void>> {

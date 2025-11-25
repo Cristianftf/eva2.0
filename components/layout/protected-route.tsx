@@ -23,7 +23,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
 
     if (!loading && isAuthenticated && allowedRoles && user) {
-      if (!allowedRoles.includes(user.rol)) {
+      if (!allowedRoles.includes(user.rol?.toUpperCase())) {
         router.push("/dashboard")
       }
     }
@@ -41,7 +41,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return null
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.rol)) {
+  if (allowedRoles && user && !allowedRoles.includes(user.rol?.toUpperCase())) {
     return null
   }
 

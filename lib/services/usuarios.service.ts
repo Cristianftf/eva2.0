@@ -18,6 +18,11 @@ class UsuariosService {
     return apiService.get<User[]>(API_ENDPOINTS.users.byRole(role))
   }
 
+  // Obtener contactos para chat
+  async getChatContacts(): Promise<ApiResponse<User[]>> {
+    return apiService.get<User[]>(API_ENDPOINTS.users.base + "/chat-contacts")
+  }
+
   // Crear nuevo usuario
   async create(data: Omit<User, "id" | "fechaRegistro">): Promise<ApiResponse<User>> {
     return apiService.post<User>(API_ENDPOINTS.users.base, data)

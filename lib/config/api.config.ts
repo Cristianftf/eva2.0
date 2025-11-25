@@ -29,8 +29,12 @@ export const API_ENDPOINTS = {
     base: "/cursos",
     byId: (id: string) => `/cursos/${id}`,
     byProfesor: (profesorId: string) => `/cursos/profesor/${profesorId}`,
+    solicitarInscripcion: (cursoId: string) => `/cursos/${cursoId}/solicitar-inscripcion`,
     inscribir: (cursoId: string) => `/cursos/${cursoId}/inscribir`,
     desinscribir: (cursoId: string) => `/cursos/${cursoId}/desinscribir`,
+    inscripcionesByEstudiante: (estudianteId: string) => `/cursos/inscripciones/estudiante/${estudianteId}`,
+    aprobarInscripcion: (inscripcionId: string) => `/cursos/aprobar-inscripcion/${inscripcionId}`,
+    rechazarInscripcion: (inscripcionId: string) => `/cursos/rechazar-inscripcion/${inscripcionId}`,
   },
 
   // Temas

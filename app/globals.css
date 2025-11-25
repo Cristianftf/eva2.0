@@ -149,8 +149,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  html,
+  :host {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
@@ -159,10 +168,71 @@
   h4,
   h5,
   h6 {
-    @apply text-balance;
+    text-wrap: balance;
   }
 
   p {
-    @apply text-pretty leading-relaxed;
+    text-wrap: pretty;
+    line-height: 1.625;
+  }
+
+  /* Vendor prefixes for better browser compatibility */
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: none;
+  }
+
+  .nextjs-container-build-error-version-status > .turbopack-text {
+    background: linear-gradient(to right, var(--color-turbopack-text-red) 0%, var(--color-turbopack-text-blue) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  [data-nextjs-call-stack-frame] {
+    display: block;
+    box-sizing: border-box;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    padding: 6px 8px;
+    border-radius: var(--rounded-lg);
+  }
+
+  /* Animations with vendor prefixes */
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height, var(--bits-accordion-content-height, var(--reka-accordion-content-height, var(--kb-accordion-content-height, auto))));
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height, var(--bits-accordion-content-height, var(--reka-accordion-content-height, var(--kb-accordion-content-height, auto))));
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  /* Backdrop filter with vendor prefixes */
+  [data-nextjs-dialog-backdrop] {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Mask image with vendor prefixes */
+  [data-nextjs-container-errors-pseudo-html-collapse='true'] .nextjs__container_errors__component-stack code {
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, black 10%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, black 10%);
   }
 }

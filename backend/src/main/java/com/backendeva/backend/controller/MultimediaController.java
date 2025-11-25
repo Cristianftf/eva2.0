@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,10 +27,32 @@ public class MultimediaController {
 
     @PostMapping("/upload")
     @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
-    public MultimediaItem uploadMultimedia(@RequestBody MultimediaItem multimedia) {
-        // En una implementación real, aquí se manejaría la subida de archivos
-        // Por ahora, solo guardamos la información
-        return multimediaService.save(multimedia);
+    public ResponseEntity<MultimediaItem> uploadMultimedia(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("temaId") Long temaId) {
+        try {
+            String tipo = detectFileType(file.getContentType());
+            MultimediaItem multimedia = multimediaService.upload(file, temaId, tipo);
+            return ResponseEntity.ok(multimedia);
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private String detectFileType(String contentType) {
+        if (contentType == null) return "documento";
+
+        if (contentType.startsWith("image/")) {
+            return "imagen";
+        } else if (contentType.startsWith("video/")) {
+            return "video";
+        } else if (contentType.startsWith("audio/")) {
+            return "audio";
+        } else {
+            return "documento";
+        }
     }
 
     @GetMapping

@@ -22,21 +22,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Verificar si hay un usuario autenticado al cargar
     const checkAuth = async () => {
+      console.log("AuthContext checkAuth: isAuthenticated =", authService.isAuthenticated())
       if (authService.isAuthenticated()) {
         try {
           const response = await authService.getCurrentUser()
+          console.log("getCurrentUser response:", response)
           if (response.success && response.data) {
             setUser(response.data)
+            console.log("User set:", response.data)
           } else {
             // Token inválido, limpiar
+            console.log("Token inválido, logout")
             await authService.logout()
           }
         } catch (error) {
           // Error de red o servidor, limpiar auth
+          console.log("Error en getCurrentUser:", error)
           await authService.logout()
         }
       }
       setLoading(false)
+      console.log("AuthContext loading set to false")
     }
 
     checkAuth()
@@ -44,9 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials)
+    console.log("Login response:", response)
 
     if (response.success && response.data) {
       setUser(response.data.user)
+      console.log("User set after login:", response.data.user)
       return { success: true }
     }
 

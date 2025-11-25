@@ -24,8 +24,20 @@ public class Inscripcion {
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;
 
+    @Enumerated(EnumType.STRING)
+    private EstadoInscripcion estado = EstadoInscripcion.PENDIENTE;
+
     private int progreso = 0;
 
     @Column(name = "fecha_inscripcion", nullable = false)
     private LocalDateTime fechaInscripcion = LocalDateTime.now();
+
+    @Column(name = "fecha_aprobacion")
+    private LocalDateTime fechaAprobacion;
+
+    public enum EstadoInscripcion {
+        PENDIENTE,
+        APROBADA,
+        RECHAZADA
+    }
 }

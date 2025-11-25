@@ -1,5 +1,6 @@
 package com.backendeva.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +26,7 @@ public class MultimediaItem {
     @Column(nullable = false)
     private String urlArchivo;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "tema_id", nullable = false)
     private Tema tema;

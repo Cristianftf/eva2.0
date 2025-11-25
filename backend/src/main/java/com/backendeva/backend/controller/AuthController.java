@@ -6,12 +6,14 @@ import com.backendeva.backend.dto.RegisterDto;
 import com.backendeva.backend.model.User;
 import com.backendeva.backend.services.AuthService;
 import com.backendeva.backend.services.JwtService;
+import com.backendeva.backend.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -24,6 +26,9 @@ public class AuthController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(@RequestBody RegisterDto registerDto) {
         User user = authService.register(registerDto);
@@ -35,6 +40,8 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
         try {
             User user = authService.login(loginDto);
+            user.setLastSeen(LocalDateTime.now());
+            usuarioService.updateUser(user);
             String token = jwtService.generateToken(user);
             return ResponseEntity.ok(new AuthResponseDto(token, user));
         } catch (Exception e) {
@@ -53,6 +60,8 @@ public class AuthController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = authService.getCurrentUser(email);
+        user.setLastSeen(LocalDateTime.now());
+        usuarioService.updateUser(user);
         return ResponseEntity.ok(user);
     }
 

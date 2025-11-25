@@ -29,12 +29,26 @@ export default function ChatPage() {
   useEffect(() => {
     if (user) {
       loadConversaciones()
+
+      // Actualizar lista de conversaciones cada 30 segundos
+      const interval = setInterval(() => {
+        loadConversaciones()
+      }, 30000)
+
+      return () => clearInterval(interval)
     }
   }, [user])
 
   useEffect(() => {
     if (selectedUser && user) {
       loadMensajes(selectedUser.id)
+
+      // Actualizar mensajes cada 5 segundos
+      const interval = setInterval(() => {
+        loadMensajes(selectedUser.id)
+      }, 5000)
+
+      return () => clearInterval(interval)
     }
   }, [selectedUser, user])
 
@@ -42,7 +56,7 @@ export default function ChatPage() {
     setLoading(true)
 
     // Cargar usuarios disponibles para chat
-    const result = await usuariosService.getAll()
+    const result = await usuariosService.getChatContacts()
 
     if (result.success && result.data) {
       // Filtrar el usuario actual
@@ -99,6 +113,14 @@ export default function ChatPage() {
     return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase()
   }
 
+  const isUserOnline = (lastSeen: string | undefined) => {
+    if (!lastSeen) return false
+    const lastSeenDate = new Date(lastSeen)
+    const now = new Date()
+    const diffMinutes = (now.getTime() - lastSeenDate.getTime()) / (1000 * 60)
+    return diffMinutes < 5 // Online si visto en los últimos 5 minutos
+  }
+
   return (
     <DashboardLayout>
       <Card className="h-[calc(100vh-12rem)]">
@@ -141,21 +163,36 @@ export default function ChatPage() {
                           selectedUser?.id === usuario.id ? "bg-muted" : ""
                         }`}
                       >
-                        <Avatar>
-                          <AvatarFallback className="bg-primary text-primary-foreground">
-                            {getInitials(usuario.nombre, usuario.apellido)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar>
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {getInitials(usuario.nombre, usuario.apellido)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {isUserOnline(usuario.lastSeen) && (
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                          )}
+                        </div>
                         <div className="flex-1 text-left">
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-medium text-sm">
                               {usuario.nombre} {usuario.apellido}
                             </p>
-                            <Badge variant="secondary" className="text-xs">
-                              {usuario.rol}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {usuario.rol}
+                              </Badge>
+                              {isUserOnline(usuario.lastSeen) && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full" title="En línea"></div>
+                              )}
+                            </div>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{usuario.email}</p>
+                          {!isUserOnline(usuario.lastSeen) && usuario.lastSeen && (
+                            <p className="text-xs text-muted-foreground">
+                              Última vez: {new Date(usuario.lastSeen).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </button>
                     ))}
