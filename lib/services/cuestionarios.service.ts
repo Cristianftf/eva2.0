@@ -18,6 +18,11 @@ class CuestionariosService {
     return apiService.get<Cuestionario[]>(API_ENDPOINTS.quizzes.byCurso(cursoId))
   }
 
+  // Obtener preguntas de un cuestionario
+  async getPreguntas(cuestionarioId: string): Promise<ApiResponse<any[]>> {
+    return apiService.get<any[]>(`${API_ENDPOINTS.quizzes.base}/${cuestionarioId}/preguntas`)
+  }
+
   // Crear nuevo cuestionario
   async create(data: Omit<Cuestionario, "id" | "fechaCreacion">): Promise<ApiResponse<Cuestionario>> {
     return apiService.post<Cuestionario>(API_ENDPOINTS.quizzes.base, data)
@@ -26,7 +31,7 @@ class CuestionariosService {
   // Responder cuestionario
   async responder(
     cuestionarioId: string,
-    respuestas: RespuestaCuestionario,
+    respuestas: { respuestas: Array<{ preguntaId: number; respuestaId: number }> },
   ): Promise<ApiResponse<{ calificacion: number; aprobado: boolean }>> {
     return apiService.post(API_ENDPOINTS.quizzes.submit(cuestionarioId), respuestas)
   }

@@ -1,0 +1,2 @@
+-- Flyway migrations disabled due to dependency issues
+-- Schema will be created using JPA ddl-auto

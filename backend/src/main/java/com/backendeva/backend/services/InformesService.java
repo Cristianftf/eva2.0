@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class InformesService {
 
     @Autowired
@@ -50,7 +51,50 @@ public class InformesService {
     }
 
     public Map<String, Object> getInformeEstudiante(Long estudianteId, Long cursoId) {
-        // Placeholder: lógica para informe de estudiante en un curso
-        return Map.of("estudianteId", estudianteId, "cursoId", cursoId, "progreso", 0, "calificacion", 0.0);
+        // Datos simulados para radar chart de competencias
+        Map<String, Object> competencias = Map.of(
+            "Acceso", 85,
+            "Evaluacion", 72,
+            "Uso", 90,
+            "Comprension", 78,
+            "Sintesis", 65,
+            "Comunicacion", 88
+        );
+
+        // Preguntas falladas con retroalimentación
+        List<Map<String, Object>> preguntasFalladas = List.of(
+            Map.of(
+                "pregunta", "¿Cuál es el operador booleano correcto para combinar términos?",
+                "respuestaUsuario", "OR",
+                "respuestaCorrecta", "AND",
+                "retroalimentacion", "El operador AND combina términos para resultados más específicos",
+                "enlaceLeccion", "/estudiante/curso/1"
+            ),
+            Map.of(
+                "pregunta", "¿Qué significa el truncamiento en búsqueda?",
+                "respuestaUsuario", "Eliminar resultados",
+                "respuestaCorrecta", "Buscar variaciones de palabras",
+                "retroalimentacion", "El truncamiento (*) busca todas las variaciones de una raíz",
+                "enlaceLeccion", "/estudiante/curso/2"
+            )
+        );
+
+        // Recomendaciones personalizadas
+        List<String> recomendaciones = List.of(
+            "Repasar operadores booleanos en el módulo de búsqueda básica",
+            "Practicar con el simulador de búsqueda avanzada",
+            "Completar el cuestionario de evaluación de fuentes"
+        );
+
+        return Map.of(
+            "estudianteId", estudianteId,
+            "cursoId", cursoId,
+            "progreso", 75,
+            "calificacion", 82.5,
+            "competencias", competencias,
+            "preguntasFalladas", preguntasFalladas,
+            "recomendaciones", recomendaciones,
+            "fechaGeneracion", LocalDateTime.now()
+        );
     }
 }

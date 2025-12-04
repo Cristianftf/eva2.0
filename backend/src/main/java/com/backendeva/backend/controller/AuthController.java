@@ -1,5 +1,6 @@
 package com.backendeva.backend.controller;
 
+import com.backendeva.backend.config.RateLimited;
 import com.backendeva.backend.dto.AuthResponseDto;
 import com.backendeva.backend.dto.LoginDto;
 import com.backendeva.backend.dto.RegisterDto;
@@ -37,6 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @RateLimited
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
         try {
             User user = authService.login(loginDto);

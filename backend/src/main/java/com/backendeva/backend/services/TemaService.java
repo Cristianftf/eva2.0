@@ -1,13 +1,14 @@
 package com.backendeva.backend.services;
 
 import com.backendeva.backend.model.Tema;
-import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.repository.TemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
+@SuppressWarnings("null")
 
 @Service
 public class TemaService {
@@ -21,6 +22,10 @@ public class TemaService {
 
     public Optional<Tema> findById(Long id) {
         return temaRepository.findById(id);
+    }
+
+    public List<Tema> findByCursoId(Long cursoId) {
+        return temaRepository.findByCursoIdOrderByOrden(cursoId);
     }
 
     public Tema save(Tema tema) {
@@ -38,12 +43,7 @@ public class TemaService {
         tema.setTitulo(temaDetails.getTitulo());
         tema.setDescripcion(temaDetails.getDescripcion());
         tema.setOrden(temaDetails.getOrden());
-        tema.setCurso(temaDetails.getCurso());
 
         return temaRepository.save(tema);
-    }
-
-    public List<Tema> getByCurso(Long cursoId) {
-        return temaRepository.findByCursoId(cursoId);
     }
 }

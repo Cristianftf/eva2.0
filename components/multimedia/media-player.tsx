@@ -17,6 +17,15 @@ interface MediaPlayerProps {
   onComplete?: () => void
 }
 
+// Función para convertir URLs relativas a absolutas
+const getAbsoluteUrl = (url: string) => {
+  if (url.startsWith('http')) {
+    return url
+  }
+  // Asumir que las URLs relativas son para el backend
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`
+}
+
 export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false, onComplete }: MediaPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -125,7 +134,7 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
         return (
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
-            src={url}
+            src={getAbsoluteUrl(url)}
             className="w-full aspect-video bg-black"
             autoPlay={autoplay}
             onClick={togglePlay}
@@ -136,7 +145,7 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
       case "audio":
         return (
           <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} src={url} autoPlay={autoplay} />
+            <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} src={getAbsoluteUrl(url)} autoPlay={autoplay} />
             <div className="text-center">
               <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Volume2 className="h-12 w-12 text-primary" />
@@ -151,7 +160,7 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
         return (
           <div className="w-full aspect-video bg-muted flex items-center justify-center">
             <img
-              src={url}
+              src={getAbsoluteUrl(url)}
               alt={titulo || nombreArchivo}
               className="max-w-full max-h-full object-contain"
               onLoad={() => onComplete?.()} // Marcar como completado al cargar
@@ -169,7 +178,7 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
               <p className="text-lg font-medium mb-2">Documento</p>
               {nombreArchivo && <p className="text-sm text-muted-foreground mb-4">{nombreArchivo}</p>}
               <Button asChild>
-                <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => onComplete?.()}>
+                <a href={getAbsoluteUrl(url)} target="_blank" rel="noopener noreferrer" onClick={() => onComplete?.()}>
                   <Download className="h-4 w-4 mr-2" />
                   Descargar y Ver
                 </a>

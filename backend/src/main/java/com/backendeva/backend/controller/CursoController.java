@@ -3,9 +3,8 @@ package com.backendeva.backend.controller;
 import com.backendeva.backend.dto.CreateCursoDto;
 import com.backendeva.backend.dto.InscripcionDto;
 import com.backendeva.backend.dto.PaginatedResponseDto;
-import com.backendeva.backend.model.Curso;
-import com.backendeva.backend.model.Inscripcion;
-import com.backendeva.backend.model.User;
+import com.backendeva.backend.model.*;
+import com.backendeva.backend.services.TemaService;
 import com.backendeva.backend.services.CursoService;
 import com.backendeva.backend.services.InscripcionService;
 import com.backendeva.backend.services.UsuarioService;
@@ -33,6 +32,9 @@ public class CursoController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private TemaService temaService;
 
     @GetMapping
     public PaginatedResponseDto<Curso> getAllCursos(
@@ -68,6 +70,7 @@ public class CursoController {
             curso.setCategoria(createCursoDto.getCategoria());
             curso.setActivo(createCursoDto.isActivo());
             curso.setFechaCreacion(LocalDate.now());
+            curso.setMetadataLom(createCursoDto.getMetadataLom());
             curso.setProfesor(profesor);
 
             Curso savedCurso = cursoService.save(curso);
@@ -148,6 +151,12 @@ public class CursoController {
     public ResponseEntity<Integer> getProgresoCurso(@PathVariable Long cursoId, @PathVariable Long estudianteId) {
         int progreso = inscripcionService.getProgresoByEstudianteAndCurso(estudianteId, cursoId);
         return ResponseEntity.ok(progreso);
+    }
+
+    @GetMapping("/{cursoId}/temas")
+    public ResponseEntity<List<com.backendeva.backend.model.Tema>> getTemasByCurso(@PathVariable Long cursoId) {
+        List<com.backendeva.backend.model.Tema> temas = temaService.findByCursoId(cursoId);
+        return ResponseEntity.ok(temas);
     }
 
     public static class SolicitudInscripcionRequest {

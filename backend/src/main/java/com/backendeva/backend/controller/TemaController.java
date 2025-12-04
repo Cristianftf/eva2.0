@@ -68,6 +68,6 @@ public class TemaController {
 
     @GetMapping("/curso/{cursoId}")
     public List<Tema> getTemasByCurso(@PathVariable Long cursoId) {
-        return temaService.getByCurso(cursoId);
+        return temaService.findByCursoId(cursoId);
     }
 }

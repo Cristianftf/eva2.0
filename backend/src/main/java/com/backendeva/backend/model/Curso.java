@@ -25,6 +25,9 @@ public class Curso {
     private boolean activo;
     private LocalDate fechaCreacion;
 
+    @Column(columnDefinition = "TEXT")
+    private String metadataLom; // JSON string con metadata LOM
+
     @ManyToOne
     @JoinColumn(name = "profesor_id")
     private User profesor;

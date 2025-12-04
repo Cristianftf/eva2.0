@@ -38,6 +38,12 @@ public class CuestionarioController {
         return ResponseEntity.ok(cuestionarios);
     }
 
+    @GetMapping("/{id}/preguntas")
+    public ResponseEntity<List<Map<String, Object>>> getPreguntasByCuestionario(@PathVariable Long id) {
+        List<Map<String, Object>> preguntas = cuestionarioService.getPreguntasByCuestionarioId(id);
+        return ResponseEntity.ok(preguntas);
+    }
+
     @PostMapping
     public ResponseEntity<Cuestionario> createCuestionario(@RequestBody Cuestionario cuestionario) {
         Cuestionario nuevoCuestionario = cuestionarioService.create(cuestionario);

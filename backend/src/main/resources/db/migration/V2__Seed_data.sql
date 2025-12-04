@@ -1,0 +1,2 @@
+-- Seed data disabled due to Flyway dependency issues
+-- Data will be seeded using DataInitializer

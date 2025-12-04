@@ -11,4 +11,5 @@ import java.util.List;
 public interface TemaRepository extends JpaRepository<Tema, Long> {
     List<Tema> findByCurso(Curso curso);
     List<Tema> findByCursoId(Long cursoId);
+    List<Tema> findByCursoIdOrderByOrden(Long cursoId);
 }

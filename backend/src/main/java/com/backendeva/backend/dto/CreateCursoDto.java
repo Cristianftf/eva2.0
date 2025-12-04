@@ -9,6 +9,7 @@ public class CreateCursoDto {
     private String categoria;
     private String profesorId;
     private boolean activo;
+    private String metadataLom;
 
     // Constructors
     public CreateCursoDto() {}
@@ -87,5 +88,13 @@ public class CreateCursoDto {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public String getMetadataLom() {
+        return metadataLom;
+    }
+
+    public void setMetadataLom(String metadataLom) {
+        this.metadataLom = metadataLom;
     }
 }

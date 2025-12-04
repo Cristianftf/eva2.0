@@ -15,7 +15,7 @@ import { multimediaService } from "@/lib/services/multimedia.service"
 import { cuestionariosService } from "@/lib/services/cuestionarios.service"
 import { MediaPlayer } from "@/components/multimedia/media-player"
 import type { Tema, MultimediaItem, Cuestionario } from "@/lib/types"
-import { Play, FileText, Image, Video, Music, CheckCircle, Clock, BookOpen, X } from "lucide-react"
+import { Play, FileText, Image, Video, Music, CheckCircle, Clock, BookOpen, X, Search } from "lucide-react"
 
 export default function CursoDetallePage() {
   const { id } = useParams()
@@ -84,7 +84,17 @@ export default function CursoDetallePage() {
       // Cargar cuestionarios del curso
       const cuestionariosResult = await cuestionariosService.getByCurso(id as string)
       if (cuestionariosResult.success && cuestionariosResult.data) {
-        setCuestionarios(cuestionariosResult.data)
+        // Cargar preguntas para cada cuestionario
+        const cuestionariosConPreguntas = await Promise.all(
+          cuestionariosResult.data.map(async (cuestionario: any) => {
+            const preguntasResult = await cuestionariosService.getPreguntas(cuestionario.id)
+            return {
+              ...cuestionario,
+              preguntas: preguntasResult.success ? preguntasResult.data : []
+            }
+          })
+        )
+        setCuestionarios(cuestionariosConPreguntas)
       }
 
     } catch (err) {
@@ -233,13 +243,10 @@ export default function CursoDetallePage() {
                           <h4 className="font-medium mb-1">{tema.titulo}</h4>
                           <p className="text-sm text-muted-foreground mb-2">{tema.descripcion}</p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            {multimedia[tema.id] && multimedia[tema.id].length > 0 && (
-                              <span>📎 {multimedia[tema.id].length} multimedia</span>
-                            )}
-                            {cuestionarios.filter(q => q.temaId === tema.id).length > 0 && (
-                              <span>📝 {cuestionarios.filter(q => q.temaId === tema.id).length} cuestionarios</span>
-                            )}
-                          </div>
+                                     {multimedia[tema.id] && multimedia[tema.id].length > 0 && (
+                                       <span>📎 {multimedia[tema.id].length} multimedia</span>
+                                     )}
+                                   </div>
                         </div>
                         {temaCompletado ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -296,21 +303,48 @@ export default function CursoDetallePage() {
                     </Card>
                   )}
 
-                  {/* Cuestionarios relacionados */}
-                  {cuestionarios.filter(q => q.temaId === selectedTema.id).length > 0 && (
+                  {/* Simulador de búsqueda */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Search className="h-5 w-5" />
+                        Práctica de Búsqueda
+                      </CardTitle>
+                      <CardDescription>
+                        Practica técnicas de búsqueda científica con operadores booleanos
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium">Simulador de Búsqueda Avanzada</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Aprende a usar operadores booleanos, campos específicos y evaluar fuentes confiables
+                          </p>
+                        </div>
+                        <Button size="sm" className="ml-4" onClick={() => window.open('/simulador', '_blank')}>
+                          <Search className="h-4 w-4 mr-2" />
+                          Abrir Simulador
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Cuestionarios del curso */}
+                  {cuestionarios.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-base flex items-center gap-2">
                           <FileText className="h-5 w-5" />
-                          Evaluaciones
+                          Evaluaciones del Curso
                         </CardTitle>
                         <CardDescription>
-                          Cuestionarios para evaluar tu aprendizaje
+                          Cuestionarios disponibles para este curso
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {cuestionarios.filter(q => q.temaId === selectedTema.id).map((cuestionario) => (
+                          {cuestionarios.map((cuestionario) => (
                             <div key={cuestionario.id} className="flex items-center justify-between p-4 border rounded-lg">
                               <div className="flex-1">
                                 <h4 className="font-medium">{cuestionario.titulo}</h4>
@@ -331,9 +365,8 @@ export default function CursoDetallePage() {
                     </Card>
                   )}
 
-                  {/* Si no hay contenido */}
-                  {(!multimedia[selectedTema.id] || multimedia[selectedTema.id].length === 0) &&
-                   cuestionarios.filter(q => q.temaId === selectedTema.id).length === 0 && (
+                  {/* Si no hay contenido multimedia */}
+                   {(!multimedia[selectedTema.id] || multimedia[selectedTema.id].length === 0) && (
                     <Card>
                       <CardContent className="flex flex-col items-center justify-center py-12">
                         <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
@@ -377,14 +410,14 @@ export default function CursoDetallePage() {
                   {selectedCuestionario.preguntas && selectedCuestionario.preguntas.length > 0 ? (
                     <div className="space-y-4">
                       {selectedCuestionario.preguntas.map((pregunta: any, index: number) => (
-                        <div key={index} className="border rounded-lg p-4">
+                        <div key={pregunta.id || index} className="border rounded-lg p-4">
                           <h4 className="font-medium mb-3">{index + 1}. {pregunta.texto}</h4>
                           <div className="space-y-2">
                             {pregunta.opciones?.map((opcion: string, opcionIndex: number) => (
                               <label key={opcionIndex} className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                   type="radio"
-                                  name={`pregunta-${index}`}
+                                  name={`pregunta-${pregunta.id || index}`}
                                   value={opcion}
                                   className="text-primary"
                                 />
@@ -406,9 +439,45 @@ export default function CursoDetallePage() {
                     <Button variant="outline" onClick={handleCloseCuestionario}>
                       Cancelar
                     </Button>
-                    <Button onClick={() => {
-                      alert("Cuestionario enviado correctamente. ¡Buen trabajo!")
-                      handleCloseCuestionario()
+                    <Button onClick={async () => {
+                      // Recopilar respuestas seleccionadas
+                      const formData = new FormData();
+                      const respuestas: Array<{ preguntaId: number; respuestaId: number }> = [];
+
+                      selectedCuestionario.preguntas?.forEach((pregunta: any, index: number) => {
+                        const radioGroup = document.getElementsByName(`pregunta-${pregunta.id || index}`);
+                        const selectedRadio = Array.from(radioGroup).find((radio: any) => radio.checked) as HTMLInputElement;
+
+                        if (selectedRadio) {
+                          // Encontrar el índice de la respuesta seleccionada
+                          const respuestaIndex = pregunta.opciones?.indexOf(selectedRadio.value);
+                          if (respuestaIndex !== undefined && respuestaIndex >= 0) {
+                            respuestas.push({
+                              preguntaId: pregunta.id || index,
+                              respuestaId: respuestaIndex
+                            });
+                          }
+                        }
+                      });
+
+                      if (respuestas.length === 0) {
+                        alert("Por favor, responde al menos una pregunta.");
+                        return;
+                      }
+
+                      try {
+                        const result = await cuestionariosService.responder(selectedCuestionario.id, { respuestas });
+                        if (result.success) {
+                          alert(`Cuestionario enviado correctamente. Calificación: ${result.data?.calificacion}%`);
+                          handleCloseCuestionario();
+                          // Recargar datos del curso
+                          loadCursoData();
+                        } else {
+                          alert("Error al enviar respuestas: " + result.error);
+                        }
+                      } catch (error) {
+                        alert("Error al enviar respuestas");
+                      }
                     }}>
                       Enviar Respuestas
                     </Button>
@@ -431,12 +500,12 @@ export default function CursoDetallePage() {
               </div>
               <div className="p-4">
                 <MediaPlayer
-                  url={`http://localhost:8080${selectedMultimedia.urlArchivo}`}
-                  tipo={selectedMultimedia.tipo.toLowerCase() as "video" | "audio" | "imagen" | "documento"}
-                  titulo={selectedMultimedia.nombreArchivo}
-                  nombreArchivo={selectedMultimedia.nombreArchivo}
-                  onComplete={handleMultimediaComplete}
-                />
+                   url={selectedMultimedia.urlArchivo}
+                   tipo={selectedMultimedia.tipo.toLowerCase() as "video" | "audio" | "imagen" | "documento"}
+                   titulo={selectedMultimedia.nombreArchivo}
+                   nombreArchivo={selectedMultimedia.nombreArchivo}
+                   onComplete={handleMultimediaComplete}
+                 />
               </div>
             </div>
           </div>

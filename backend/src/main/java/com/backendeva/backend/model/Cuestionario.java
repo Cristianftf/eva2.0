@@ -18,6 +18,9 @@ public class Cuestionario {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column(columnDefinition = "TEXT")
+    private String qtiPayload; // XML payload para IMS QTI
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;
@@ -73,5 +76,13 @@ public class Cuestionario {
 
     public void setPreguntas(List<Pregunta> preguntas) {
         this.preguntas = preguntas;
+    }
+
+    public String getQtiPayload() {
+        return qtiPayload;
+    }
+
+    public void setQtiPayload(String qtiPayload) {
+        this.qtiPayload = qtiPayload;
     }
 }

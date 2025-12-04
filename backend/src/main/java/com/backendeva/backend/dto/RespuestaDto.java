@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RespuestaDto {
-    private Long preguntaId;
-    private Long respuestaId;
+    private Integer preguntaId;
+    private Integer respuestaId;
 }
