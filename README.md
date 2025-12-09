@@ -1,4 +1,4 @@
-# EVA - Entorno Virtual de Aprendizaje
+# EduSearch - Entorno Virtual de Aprendizaje
 
 Sistema completo de gestión de aprendizaje en línea con paneles diferenciados para administradores, profesores y estudiantes. Desarrollado con React, TypeScript y Next.js, preparado para conectarse con un backend de Spring Framework y PostgreSQL.
 

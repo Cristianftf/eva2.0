@@ -8,7 +8,7 @@ import { I18nProvider } from "@/components/i18n-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EVA - Entorno Virtual de Aprendizaje",
+  title: "EduSearch - Entorno Virtual de Aprendizaje",
   description:
     "Plataforma educativa completa para gestión de cursos, cuestionarios y comunicación entre estudiantes y profesores",
   generator: 'v0.app',

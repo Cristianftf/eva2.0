@@ -1,4 +1,4 @@
-// Tipos principales del sistema EVA
+// Tipos principales del sistema EduSearch
 
 export type UserRole = "ADMIN" | "PROFESOR" | "ESTUDIANTE"
 

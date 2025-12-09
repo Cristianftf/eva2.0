@@ -9,7 +9,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <BookOpen className="h-10 w-10 text-primary" />
-          <h1 className="text-3xl font-bold">EVA</h1>
+          <h1 className="text-3xl font-bold">EduSearch</h1>
         </div>
 
         <Card>
