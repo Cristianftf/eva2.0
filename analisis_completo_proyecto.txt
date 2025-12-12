@@ -41,6 +41,330 @@ Sistema completo de gestión de aprendizaje en línea con paneles diferenciados 
 
 ---
 
+## COMPONENTES DETALLADOS POR FUNCIONALIDAD
+
+Esta sección detalla exhaustivamente todos los archivos, clases, componentes, servicios, controladores y utilidades que conforman cada funcionalidad del sistema.
+
+### 1. AUTENTICACIÓN Y REGISTRO
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/auth/login/` | Página de inicio de sesión |
+| `page.tsx` | `app/auth/register/` | Página de registro |
+| **Frontend - Componentes** | | |
+| `login-form.tsx` | `components/auth/` | Formulario de login con validación |
+| `register-form.tsx` | `components/auth/` | Formulario de registro con validación |
+| **Frontend - Servicios** | | |
+| `auth.service.ts` | `lib/services/` | Servicio API para autenticación |
+| **Frontend - Context/Providers** | | |
+| `auth.context.tsx` | `lib/context/` | Contexto global de autenticación |
+| **Frontend - Utilidades** | | |
+| `protected-route.tsx` | `components/layout/` | Componente de protección de rutas |
+| `middleware.ts` | `app/` | Middleware de Next.js para rutas protegidas |
+| **Backend - Controladores** | | |
+| `AuthController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Endpoints REST de autenticación |
+| **Backend - Servicios** | | |
+| `AuthService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de negocio de autenticación |
+| `JwtService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Gestión de tokens JWT |
+| `UserDetailsServiceImp.java` | `backend/src/main/java/com/backendeva/backend/services/` | Servicio de detalles de usuario para Spring Security |
+| **Backend - Repositorios** | | |
+| `UserRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a datos de usuarios |
+| **Backend - Modelos** | | |
+| `User.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Usuario |
+| **Backend - DTOs** | | |
+| `LoginDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos de login |
+| `RegisterDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos de registro |
+| `AuthResponseDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Respuesta de autenticación |
+| **Backend - Filtros/Configuración** | | |
+| `JwtAuthenticationFilter.java` | `backend/src/main/java/com/backendeva/backend/filter/` | Filtro JWT para autenticación |
+| `SecurityConfig.java` | `backend/src/main/java/com/backendeva/backend/config/` | Configuración de Spring Security |
+| **Backend - Tests** | | |
+| `AuthServiceTest.java` | `backend/src/test/java/com/backendeva/backend/` | Tests unitarios del servicio de autenticación |
+
+### 2. DASHBOARD POR ROLES
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas (Estudiante)** | | |
+| `page.tsx` | `app/estudiante/dashboard/` | Dashboard principal del estudiante |
+| **Frontend - Páginas (Profesor)** | | |
+| `page.tsx` | `app/profesor/dashboard/` | Dashboard principal del profesor |
+| **Frontend - Páginas (Administrador)** | | |
+| `page.tsx` | `app/admin/dashboard/` | Dashboard principal del administrador |
+| **Frontend - Componentes (Estudiante)** | | |
+| `mis-cursos-tab.tsx` | `components/estudiante/` | Tab de cursos inscritos |
+| `cursos-disponibles-tab.tsx` | `components/estudiante/` | Tab de cursos disponibles |
+| `mis-calificaciones-tab.tsx` | `components/estudiante/` | Tab de calificaciones |
+| **Frontend - Componentes (Profesor)** | | |
+| `mis-cursos-profesor-tab.tsx` | `components/profesor/` | Tab de cursos propios |
+| `crear-curso-tab.tsx` | `components/profesor/` | Tab para crear cursos |
+| `estudiantes-curso-tab.tsx` | `components/profesor/` | Tab de estudiantes inscritos |
+| `cuestionarios-curso-tab.tsx` | `components/profesor/` | Tab de cuestionarios |
+| `gestion-multimedia-tab.tsx` | `components/profesor/` | Tab de gestión multimedia |
+| `informes-tab.tsx` | `components/profesor/` | Tab de informes |
+| `solicitudes-inscripcion-tab.tsx` | `components/profesor/` | Tab de solicitudes |
+| **Frontend - Componentes (Administrador)** | | |
+| `usuarios-tab.tsx` | `components/admin/` | Tab de gestión de usuarios |
+| `cursos-tab.tsx` | `components/admin/` | Tab de gestión de cursos |
+| `recursos-tab.tsx` | `components/admin/` | Tab de gestión de recursos |
+| `estadisticas-tab.tsx` | `components/admin/` | Tab de estadísticas globales |
+| **Frontend - Layout** | | |
+| `dashboard-layout.tsx` | `components/layout/` | Layout común para dashboards |
+| `main-nav.tsx` | `components/layout/` | Navegación principal |
+| **Frontend - Servicios** | | |
+| `courses.service.ts` | `lib/services/` | Servicio API para cursos |
+| `estadisticas.service.ts` | `lib/services/` | Servicio API para estadísticas |
+| `inscripciones.service.ts` | `lib/services/` | Servicio API para inscripciones |
+| `usuarios.service.ts` | `lib/services/` | Servicio API para usuarios |
+| **Backend - Controladores** | | |
+| `UsuarioController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de usuarios |
+| `EstadisticasController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Estadísticas del sistema |
+| **Backend - Servicios** | | |
+| `UsuarioService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de usuarios |
+| `EstadisticasService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Cálculos estadísticos |
+| **Backend - Repositorios** | | |
+| `UserRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a usuarios |
+| **Backend - DTOs** | | |
+| `EstadisticasDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos estadísticos |
+| `EstadisticasEstudianteDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Estadísticas estudiante |
+| `EstadisticasProfesorDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Estadísticas profesor |
+
+### 3. GESTIÓN DE CURSOS
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/estudiante/curso/[id]/` | Vista de curso para estudiantes |
+| `page.tsx` | `app/profesor/curso/[id]/` | Vista de curso para profesores |
+| **Frontend - Componentes (Profesores)** | | |
+| `crear-curso-tab.tsx` | `components/profesor/` | Creación de cursos |
+| `contenido-curso-tab.tsx` | `components/profesor/` | Gestión de contenido |
+| `estudiantes-curso-tab.tsx` | `components/profesor/` | Lista de estudiantes |
+| `solicitudes-inscripcion-tab.tsx` | `components/profesor/` | Gestión de solicitudes |
+| **Frontend - Componentes (Estudiantes)** | | |
+| `mis-cursos-tab.tsx` | `components/estudiante/` | Cursos inscritos |
+| `cursos-disponibles-tab.tsx` | `components/estudiante/` | Cursos disponibles |
+| **Frontend - Servicios** | | |
+| `courses.service.ts` | `lib/services/` | API de cursos |
+| `inscripciones.service.ts` | `lib/services/` | API de inscripciones |
+| `temas.service.ts` | `lib/services/` | API de temas |
+| **Backend - Controladores** | | |
+| `CursoController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de cursos |
+| `InscripcionController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Inscripciones |
+| `TemaController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de temas |
+| **Backend - Servicios** | | |
+| `CursoService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de cursos |
+| `InscripcionService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de inscripciones |
+| `TemaService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de temas |
+| **Backend - Repositorios** | | |
+| `CursoRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a cursos |
+| `InscripcionRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a inscripciones |
+| `TemaRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a temas |
+| **Backend - Modelos** | | |
+| `Curso.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Curso |
+| `Inscripcion.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Inscripción |
+| `Tema.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Tema |
+| **Backend - DTOs** | | |
+| `CreateCursoDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Creación de curso |
+| `CreateTemaDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Creación de tema |
+| `InscripcionDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos de inscripción |
+
+### 4. CUESTIONARIOS Y EVALUACIONES
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/estudiante/cuestionario/[id]/` | Página de cuestionario |
+| **Frontend - Componentes** | | |
+| `pregunta-factory.tsx` | `components/preguntas/` | Factory de preguntas |
+| `verdadero-falso-pregunta.tsx` | `components/preguntas/` | Pregunta V/F |
+| `completar-texto-pregunta.tsx` | `components/preguntas/` | Pregunta completar texto |
+| `arrastrar-soltar-pregunta.tsx` | `components/preguntas/` | Pregunta drag & drop |
+| `ordenar-elementos-pregunta.tsx` | `components/preguntas/` | Pregunta ordenar elementos |
+| `accessible-pregunta.tsx` | `components/preguntas/` | Versión accesible |
+| `crear-cuestionario-modal.tsx` | `components/profesor/` | Modal de creación |
+| **Frontend - Servicios** | | |
+| `cuestionarios.service.ts` | `lib/services/` | API de cuestionarios |
+| **Backend - Controladores** | | |
+| `CuestionarioController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de cuestionarios |
+| **Backend - Servicios** | | |
+| `CuestionarioService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de cuestionarios |
+| **Backend - Repositorios** | | |
+| `CuestionarioRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a cuestionarios |
+| **Backend - Modelos** | | |
+| `Cuestionario.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Cuestionario |
+| `Pregunta.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Pregunta |
+| `Respuesta.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Respuesta |
+| `Resultado.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Resultado |
+| `TipoPregunta.java` | `backend/src/main/java/com/backendeva/backend/model/` | Enum tipos de pregunta |
+| **Backend - DTOs** | | |
+| `EnviarCuestionarioDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Envío de cuestionario |
+| `RespuestaDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos de respuesta |
+
+### 5. RECURSOS MULTIMEDIA
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Componentes** | | |
+| `media-player.tsx` | `components/multimedia/` | Reproductor multimedia |
+| `media-viewer.tsx` | `components/multimedia/` | Visor de archivos |
+| `gestion-multimedia-tab.tsx` | `components/profesor/` | Gestión de archivos |
+| **Frontend - Servicios** | | |
+| `multimedia.service.ts` | `lib/services/` | API de multimedia |
+| **Backend - Controladores** | | |
+| `MultimediaController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión multimedia |
+| **Backend - Servicios** | | |
+| `MultimediaService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica multimedia |
+| **Backend - Repositorios** | | |
+| `MultimediaRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso multimedia |
+| **Backend - Modelos** | | |
+| `MultimediaItem.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Multimedia |
+
+### 6. SISTEMA DE CHAT
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/chat/` | Página principal del chat |
+| **Frontend - Componentes** | | |
+| `chat-widget.tsx` | `components/chat/` | Widget flotante de chat |
+| `chat-button.tsx` | `components/chat/` | Botón de acceso al chat |
+| **Frontend - Servicios** | | |
+| `mensajes.service.ts` | `lib/services/` | API de mensajes |
+| **Backend - Controladores** | | |
+| `MensajesController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de mensajes |
+| **Backend - Servicios** | | |
+| `MensajesService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de mensajes |
+| **Backend - Repositorios** | | |
+| `MensajeRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a mensajes |
+| **Backend - Modelos** | | |
+| `Mensaje.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Mensaje |
+
+### 7. NOTIFICACIONES
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/notificaciones/` | Centro de notificaciones |
+| **Frontend - Componentes** | | |
+| `notification-toast.tsx` | `components/notifications/` | Toasts emergentes |
+| `notifications-button.tsx` | `components/notifications/` | Botón con contador |
+| **Frontend - Servicios** | | |
+| `notificaciones.service.ts` | `lib/services/` | API de notificaciones |
+| **Backend - Controladores** | | |
+| `NotificacionesController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de notificaciones |
+| **Backend - Servicios** | | |
+| `NotificacionesService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de notificaciones |
+| **Backend - Repositorios** | | |
+| `NotificacionRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a notificaciones |
+| **Backend - Modelos** | | |
+| `Notificacion.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Notificación |
+
+### 8. INFORMES Y ESTADÍSTICAS
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Componentes** | | |
+| `informes-tab.tsx` | `components/profesor/` | Generación de informes |
+| **Frontend - Servicios** | | |
+| `informes.service.ts` | `lib/services/` | API de informes |
+| `estadisticas.service.ts` | `lib/services/` | API de estadísticas |
+| **Backend - Controladores** | | |
+| `InformesController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Generación de informes |
+| `EstadisticasController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Estadísticas |
+| **Backend - Servicios** | | |
+| `InformesService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de informes |
+| `EstadisticasService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica estadística |
+| **Backend - DTOs** | | |
+| `InformeCursoDto.java` | `backend/src/main/java/com/backendeva/backend/dto/` | Datos de informe |
+
+### 9. RECURSOS CONFIABLES
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/recursos/` | Página de recursos |
+| **Frontend - Componentes** | | |
+| `recurso-card.tsx` | `components/recursos/` | Tarjeta de recurso |
+| `recursos-filters.tsx` | `components/recursos/` | Filtros de búsqueda |
+| **Frontend - Servicios** | | |
+| `recursos.service.ts` | `lib/services/` | API de recursos |
+| **Backend - Controladores** | | |
+| `RecursoController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de recursos |
+| `EvaluacionCRAAPController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Evaluación CRAAP |
+| **Backend - Servicios** | | |
+| `RecursoService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de recursos |
+| `EvaluacionCRAAPService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica CRAAP |
+| **Backend - Repositorios** | | |
+| `RecursoRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a recursos |
+| `EvaluacionCRAAPRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso evaluaciones |
+| **Backend - Modelos** | | |
+| `Recurso.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Recurso |
+| `EvaluacionCRAAP.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Evaluación CRAAP |
+
+### 10. SIMULADOR DE BÚSQUEDA
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/simulador/` | Página del simulador |
+| `page.tsx` | `app/simulador-busqueda/` | Variante del simulador |
+| **Backend - Controladores** | | |
+| `SimuladorBusquedaController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Simulador de búsqueda |
+| **Backend - Servicios** | | |
+| `SimuladorBusquedaService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica del simulador |
+| **Backend - Repositorios** | | |
+| `SimulacionBusquedaRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso simulaciones |
+| `ResultadoSimulacionRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso resultados |
+| **Backend - Modelos** | | |
+| `SimulacionBusqueda.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Simulación |
+| `ResultadoSimulacion.java` | `backend/src/main/java/com/backendeva/backend/model/` | Entidad Resultado |
+
+### 11. GESTIÓN DE USUARIOS (ADMINISTRADOR)
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Componentes** | | |
+| `usuarios-tab.tsx` | `components/admin/` | Gestión de usuarios |
+| **Frontend - Servicios** | | |
+| `usuarios.service.ts` | `lib/services/` | API de usuarios |
+| **Backend - Controladores** | | |
+| `UsuarioController.java` | `backend/src/main/java/com/backendeva/backend/controller/` | Gestión de usuarios |
+| **Backend - Servicios** | | |
+| `UsuarioService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Lógica de usuarios |
+| **Backend - Repositorios** | | |
+| `UserRepository.java` | `backend/src/main/java/com/backendeva/backend/repository/` | Acceso a usuarios |
+
+### 12. PERFIL DE USUARIO
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - Páginas** | | |
+| `page.tsx` | `app/perfil/` | Página de perfil |
+| **Frontend - Layout** | | |
+| `dashboard-layout.tsx` | `components/layout/` | Layout con info de perfil |
+| **Backend - Servicios** | | |
+| `AuthService.java` | `backend/src/main/java/com/backendeva/backend/services/` | Métodos de perfil |
+
+### COMPONENTES COMUNES Y UTILIDADES
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Frontend - UI Components** | | |
+| `button.tsx`, `input.tsx`, `card.tsx`, etc. | `components/ui/` | Componentes shadcn/ui |
+| **Frontend - Providers** | | |
+| `client-providers.tsx` | `components/providers/` | Providers de React |
+| `cache-provider.tsx` | `components/providers/` | Provider de caché |
+| `theme-provider.tsx` | `components/theme-provider.tsx` | Provider de tema |
+| `i18n-provider.tsx` | `components/i18n-provider.tsx` | Provider de internacionalización |
+| **Frontend - Hooks** | | |
+| `use-cached-data.ts` | `hooks/` | Hook para datos cacheados |
+| `use-mobile.ts` | `hooks/` | Hook para detección móvil |
+| `use-prefetch.ts` | `hooks/` | Hook para prefetch |
+| `use-toast.ts` | `hooks/` | Hook para toasts |
+| **Frontend - Utilidades** | | |
+| `utils.ts` | `lib/` | Utilidades generales |
+| `api.service.ts` | `lib/services/` | Servicio base API |
+| `query-client.ts` | `lib/` | Configuración React Query |
+| **Backend - Configuración** | | |
+| `CacheConfig.java` | `backend/src/main/java/com/backendeva/backend/config/` | Configuración de caché |
+| `DataInitializer.java` | `backend/src/main/java/com/backendeva/backend/config/` | Inicialización de datos |
+| `OpenApiConfig.java` | `backend/src/main/java/com/backendeva/backend/config/` | Configuración Swagger |
+| `RateLimitAspect.java` | `backend/src/main/java/com/backendeva/backend/config/` | Rate limiting |
+| `WebConfig.java` | `backend/src/main/java/com/backendeva/backend/config/` | Configuración web |
+| **Backend - Utilidades** | | |
+| `AppConstants.java` | `backend/src/main/java/com/backendeva/backend/utils/` | Constantes |
+
+---
+
 ## FUNCIONALIDADES PRINCIPALES
 
 ### 1. AUTENTICACIÓN Y REGISTRO
