@@ -28,9 +28,6 @@ public class DataInitializer implements CommandLineRunner {
     private TemaService temaService;
 
     @Autowired
-    private MultimediaService multimediaService;
-
-    @Autowired
     private CuestionarioService cuestionarioService;
 
     @Override

@@ -98,10 +98,10 @@ export interface RespuestaIndividual {
 
 export interface Inscripcion {
   id: string
-  cursoId: number
+  cursoId: string
   cursoTitulo: string
   cursoDescripcion: string
-  estudianteId: number
+  estudianteId: string
   estudianteNombre: string
   fechaInscripcion: string
   progreso: number // 0-100

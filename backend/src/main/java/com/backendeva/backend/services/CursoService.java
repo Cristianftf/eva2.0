@@ -21,23 +21,23 @@ public class CursoService {
     }
 
     public Page<Curso> findAll(Pageable pageable) {
-        return cursoRepository.findAll(pageable);
+        return cursoRepository.findAll(java.util.Objects.requireNonNull(pageable));
     }
 
     public Optional<Curso> findById(Long id) {
-        return cursoRepository.findById(id);
+        return cursoRepository.findById(java.util.Objects.requireNonNull(id));
     }
 
     public Curso save(Curso curso) {
-        return cursoRepository.save(curso);
+        return cursoRepository.save(java.util.Objects.requireNonNull(curso));
     }
 
     public void deleteById(Long id) {
-        cursoRepository.deleteById(id);
+        cursoRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 
     public Curso update(Long id, Curso cursoDetails) {
-        Curso curso = cursoRepository.findById(id)
+        Curso curso = cursoRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Curso not found with id: " + id));
 
         curso.setTitulo(cursoDetails.getTitulo());

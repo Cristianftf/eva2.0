@@ -3,7 +3,6 @@ package com.backendeva.backend.services;
 import com.backendeva.backend.dto.InscripcionDto;
 import com.backendeva.backend.model.Curso;
 import com.backendeva.backend.model.Inscripcion;
-import com.backendeva.backend.model.Notificacion;
 import com.backendeva.backend.model.User;
 import com.backendeva.backend.repository.InscripcionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,7 @@ public class InscripcionService {
     }
 
     public Inscripcion save(Inscripcion inscripcion) {
-        return inscripcionRepository.save(inscripcion);
+        return inscripcionRepository.save(java.util.Objects.requireNonNull(inscripcion));
     }
 
     public List<Inscripcion> findByEstudianteId(Long estudianteId) {
@@ -69,7 +68,8 @@ public class InscripcionService {
     }
 
     public Inscripcion actualizarProgreso(Long id, int progreso) {
-        Optional<Inscripcion> optional = inscripcionRepository.findById(id);
+        @SuppressWarnings("null")
+        Optional<Inscripcion> optional = inscripcionRepository.findById(java.util.Objects.requireNonNull(id));
         if (optional.isPresent()) {
             Inscripcion inscripcion = optional.get();
             inscripcion.setProgreso(progreso);
@@ -117,7 +117,8 @@ public class InscripcionService {
     }
 
     public Inscripcion aprobarInscripcion(Long inscripcionId) {
-        Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId)
+        @SuppressWarnings("null")
+        Inscripcion inscripcion = inscripcionRepository.findById(java.util.Objects.requireNonNull(inscripcionId))
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
 
         if (inscripcion.getEstado() != Inscripcion.EstadoInscripcion.PENDIENTE) {
@@ -141,7 +142,8 @@ public class InscripcionService {
     }
 
     public Inscripcion rechazarInscripcion(Long inscripcionId) {
-        Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId)
+        @SuppressWarnings("null")
+        Inscripcion inscripcion = inscripcionRepository.findById(java.util.Objects.requireNonNull(inscripcionId))
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
 
         if (inscripcion.getEstado() != Inscripcion.EstadoInscripcion.PENDIENTE) {

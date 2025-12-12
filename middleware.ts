@@ -31,14 +31,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Limit middleware to only run on protected and auth-related routes.
+  // Esto reduce la superficie de ejecución y evita interferir con otras rutas.
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/estudiante/:path*",
+    "/profesor/:path*",
+    "/auth/:path*",
   ],
 }

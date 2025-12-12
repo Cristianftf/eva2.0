@@ -42,7 +42,7 @@ export function RegisterForm() {
     const result = await register(registerData)
 
     if (result.success) {
-      router.push("/dashboard")
+      router.push("/auth/login?message=Registro exitoso. Inicia sesión para continuar.")
     } else {
       setError(result.error || "Error al registrarse")
     }

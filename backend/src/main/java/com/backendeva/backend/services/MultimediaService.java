@@ -30,19 +30,19 @@ public class MultimediaService {
     }
 
     public Optional<MultimediaItem> findById(Long id) {
-        return multimediaRepository.findById(id);
+        return multimediaRepository.findById(java.util.Objects.requireNonNull(id));
     }
 
     public MultimediaItem save(MultimediaItem multimedia) {
-        return multimediaRepository.save(multimedia);
+        return multimediaRepository.save(java.util.Objects.requireNonNull(multimedia));
     }
 
     public void deleteById(Long id) {
-        multimediaRepository.deleteById(id);
+        multimediaRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 
     public MultimediaItem update(Long id, MultimediaItem multimediaDetails) {
-        MultimediaItem multimedia = multimediaRepository.findById(id)
+        MultimediaItem multimedia = multimediaRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Multimedia not found with id: " + id));
 
         multimedia.setNombreArchivo(multimediaDetails.getNombreArchivo());

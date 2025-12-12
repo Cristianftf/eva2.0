@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@org.springframework.lang.NonNull ResourceHandlerRegistry registry) {
         // Servir archivos multimedia desde /uploads
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + Paths.get("uploads").toAbsolutePath() + "/");

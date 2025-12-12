@@ -28,7 +28,7 @@ public class NotificacionesService {
     }
 
     public Notificacion createNotificacion(Long usuarioId, String titulo, String mensaje, String tipo) {
-        User usuario = userRepository.findById(usuarioId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        User usuario = userRepository.findById(java.util.Objects.requireNonNull(usuarioId)).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         Notificacion notificacion = new Notificacion();
         notificacion.setUsuario(usuario);
@@ -40,7 +40,7 @@ public class NotificacionesService {
     }
 
     public Notificacion marcarComoLeida(Long id) {
-        Notificacion notificacion = notificacionRepository.findById(id).orElseThrow(() -> new RuntimeException("Notificación no encontrada"));
+        Notificacion notificacion = notificacionRepository.findById(java.util.Objects.requireNonNull(id)).orElseThrow(() -> new RuntimeException("Notificación no encontrada"));
         notificacion.setLeida(true);
         return notificacionRepository.save(notificacion);
     }
@@ -50,15 +50,15 @@ public class NotificacionesService {
         for (Notificacion notif : notificaciones) {
             notif.setLeida(true);
         }
-        notificacionRepository.saveAll(notificaciones);
+        notificacionRepository.saveAll(java.util.Objects.requireNonNull(notificaciones));
     }
 
     public void deleteNotificacion(Long id) {
-        notificacionRepository.deleteById(id);
+        notificacionRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 
     public boolean isOwnerOfNotification(Long notificationId, Long userId) {
-        Optional<Notificacion> notif = notificacionRepository.findById(notificationId);
+        Optional<Notificacion> notif = notificacionRepository.findById(java.util.Objects.requireNonNull(notificationId));
         return notif.isPresent() && notif.get().getUsuario().getId().equals(userId);
     }
 }

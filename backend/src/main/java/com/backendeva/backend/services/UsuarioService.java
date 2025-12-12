@@ -19,11 +19,11 @@ public class UsuarioService {
     }
 
     public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+        return userRepository.findById(java.util.Objects.requireNonNull(id));
     }
 
     public User save(User user) {
-        return userRepository.save(user);
+        return userRepository.save(java.util.Objects.requireNonNull(user));
     }
 
     public List<User> findByRole(String role) {
@@ -31,11 +31,11 @@ public class UsuarioService {
     }
 
     public void deleteById(Long id) {
-        userRepository.deleteById(id);
+        userRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 
     public User update(Long id, User userDetails) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
         user.setNombre(userDetails.getNombre());
@@ -50,6 +50,7 @@ public class UsuarioService {
         return userRepository.save(user);
     }
 
+    @SuppressWarnings("null")
     public User updateUser(User user) {
         return userRepository.save(user);
     }
@@ -64,7 +65,7 @@ public class UsuarioService {
             if (usersWithEmail.size() > 1) {
                 // Keep the first one (smallest ID), delete others
                 usersWithEmail.stream().skip(1).forEach(user -> {
-                    userRepository.deleteById(user.getId());
+                    userRepository.deleteById(java.util.Objects.requireNonNull(user.getId()));
                 });
                 deleted += usersWithEmail.size() - 1;
             }

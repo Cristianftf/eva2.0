@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cuestionariosService } from "@/lib/services/cuestionarios.service"
+import { CrearCuestionarioModal } from "./crear-cuestionario-modal"
 import type { Cuestionario } from "@/lib/types"
-import { Plus, Edit, Trash2, FileText } from "lucide-react"
+import { Edit, Trash2, FileText, Plus } from "lucide-react"
 
 interface CuestionariosCursoTabProps {
   cursoId: string
@@ -50,10 +51,7 @@ export function CuestionariosCursoTab({ cursoId }: CuestionariosCursoTabProps) {
             <CardTitle>Cuestionarios del Curso</CardTitle>
             <CardDescription>Crea evaluaciones para tus estudiantes</CardDescription>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Crear Cuestionario
-          </Button>
+          <CrearCuestionarioModal cursoId={cursoId} onSuccess={loadCuestionarios} />
         </div>
       </CardHeader>
       <CardContent>
@@ -61,7 +59,16 @@ export function CuestionariosCursoTab({ cursoId }: CuestionariosCursoTabProps) {
           <div className="text-center py-12">
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No hay cuestionarios creados</p>
-            <Button>Crear Primer Cuestionario</Button>
+            <CrearCuestionarioModal
+              cursoId={cursoId}
+              onSuccess={loadCuestionarios}
+              trigger={
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear Primer Cuestionario
+                </Button>
+              }
+            />
           </div>
         ) : (
           <div className="space-y-4">

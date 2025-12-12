@@ -1,6 +1,7 @@
 import { apiService } from "./api.service"
 import { API_ENDPOINTS } from "@/lib/config/api.config"
 import type { Cuestionario, RespuestaCuestionario, ApiResponse } from "@/lib/types"
+import type { PreguntaData, RespuestaEstudiante, EnviarCuestionarioData } from "@/lib/types/pregunta"
 
 class CuestionariosService {
   // Obtener todos los cuestionarios
@@ -69,6 +70,43 @@ class CuestionariosService {
     )
     if (!response.success || !response.data) {
       throw new Error(response.error || "Error al enviar respuestas")
+    }
+    return response.data
+  }
+
+  // Nuevo método para obtener preguntas con datos específicos por tipo
+  async obtenerPreguntasDetalladas(cuestionarioId: number): Promise<PreguntaData[]> {
+    const response = await apiService.get<PreguntaData[]>(`${API_ENDPOINTS.quizzes.base}/${cuestionarioId}/preguntas`)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Error al obtener preguntas")
+    }
+    return response.data
+  }
+
+  // Nuevo método para enviar respuestas de diferentes tipos
+  async enviarRespuestasCompletas(
+    cuestionarioId: number,
+    respuestas: RespuestaEstudiante[],
+  ): Promise<{ calificacion: number; aprobado: boolean }> {
+    const payload: EnviarCuestionarioData = { respuestas }
+    const response = await apiService.post<{ calificacion: number; aprobado: boolean }>(
+      `${API_ENDPOINTS.quizzes.base}/${cuestionarioId}/responder`,
+      payload,
+    )
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Error al enviar respuestas")
+    }
+    return response.data
+  }
+
+  // Método para validar una pregunta antes de crearla
+  async validarPregunta(pregunta: Partial<PreguntaData>): Promise<{ valida: boolean; errores: string[] }> {
+    const response = await apiService.post<{ valida: boolean; errores: string[] }>(
+      `${API_ENDPOINTS.quizzes.base}/validar-pregunta`,
+      pregunta,
+    )
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Error al validar pregunta")
     }
     return response.data
   }

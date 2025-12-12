@@ -5,7 +5,6 @@ import com.backendeva.backend.dto.LoginDto;
 import com.backendeva.backend.dto.RegisterDto;
 import com.backendeva.backend.model.User;
 import com.backendeva.backend.repository.UserRepository;
-import com.backendeva.backend.services.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

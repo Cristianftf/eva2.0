@@ -3,11 +3,7 @@ package com.backendeva.backend.services;
 import com.backendeva.backend.model.Recurso;
 import com.backendeva.backend.repository.RecursoRepository;
 
-import io.micrometer.common.lang.NonNull;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,11 +28,11 @@ public class RecursoService {
     }
 
     public Optional<Recurso> getRecursoById(Long id) {
-        return recursoRepository.findById(id);
+        return recursoRepository.findById(java.util.Objects.requireNonNull(id));
     }
 
     public Recurso createRecurso( Recurso recurso) {
-        return recursoRepository.save( recurso);
+        return recursoRepository.save(java.util.Objects.requireNonNull(recurso));
     }
 
     public Recurso updateRecurso(Long id, Recurso recurso) {
@@ -49,6 +45,6 @@ public class RecursoService {
     }
 
     public void deleteRecurso(Long id) {
-        recursoRepository.deleteById(id);
+        recursoRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 }

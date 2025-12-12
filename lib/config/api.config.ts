@@ -1,8 +1,11 @@
 // Configuración de la API para conectar con Spring Backend
 
 // URL base del backend de Spring Framework
-// Cambiar según tu configuración local
+// En desarrollo local, usamos rewrites de Next.js para evitar CORS
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+
+// Para desarrollo local, podemos también usar:
+// export const API_BASE_URL = "/api"  // Esto usa los rewrites de next.config.mjs
 
 // Endpoints de la API
 export const API_ENDPOINTS = {

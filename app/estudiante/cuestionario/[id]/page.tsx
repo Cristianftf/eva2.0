@@ -4,13 +4,13 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { useToast } from "@/components/ui/use-toast"
 import { cuestionariosService } from "@/lib/services/cuestionarios.service"
+import { PreguntaFactory } from "@/components/preguntas/pregunta-factory"
 import type { Cuestionario, Pregunta } from "@/lib/types"
+import type { PreguntaData, RespuestaEstudiante } from "@/lib/types/pregunta"
 import { Clock, CheckCircle2, AlertCircle } from "lucide-react"
 
 export default function TomarCuestionarioPage() {
@@ -18,8 +18,8 @@ export default function TomarCuestionarioPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [cuestionario, setCuestionario] = useState<Cuestionario | null>(null)
-  const [preguntas, setPreguntas] = useState<Pregunta[]>([])
-  const [respuestas, setRespuestas] = useState<Record<number, number>>({})
+  const [preguntas, setPreguntas] = useState<PreguntaData[]>([])
+  const [respuestas, setRespuestas] = useState<Record<number, RespuestaEstudiante>>({})
   const [preguntaActual, setPreguntaActual] = useState(0)
   const [tiempoRestante, setTiempoRestante] = useState<number | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -50,7 +50,11 @@ export default function TomarCuestionarioPage() {
     try {
       const data = await cuestionariosService.obtenerCuestionario(Number(params.id))
       setCuestionario(data)
-      setPreguntas(data.preguntas || [])
+      
+      // Usar el nuevo método para obtener preguntas detalladas
+      const preguntasDetalladas = await cuestionariosService.obtenerPreguntasDetalladas(Number(params.id))
+      setPreguntas(preguntasDetalladas)
+      
       if (data.duracionMinutos) {
         setTiempoRestante(data.duracionMinutos * 60)
       }
@@ -65,10 +69,10 @@ export default function TomarCuestionarioPage() {
     }
   }
 
-  const seleccionarRespuesta = (preguntaId: number, respuestaId: number) => {
+  const manejarRespuestaSeleccionada = (respuesta: RespuestaEstudiante) => {
     setRespuestas((prev) => ({
       ...prev,
-      [preguntaId]: respuestaId,
+      [respuesta.preguntaId]: respuesta,
     }))
   }
 
@@ -87,16 +91,16 @@ export default function TomarCuestionarioPage() {
   const enviarCuestionario = async () => {
     setEnviando(true)
     try {
-      const respuestasArray = Object.entries(respuestas).map(([preguntaId, respuestaId]) => ({
-        preguntaId: Number(preguntaId),
-        respuestaId,
-      }))
+      const respuestasArray = Object.values(respuestas)
 
-      await cuestionariosService.enviarRespuestas(Number(params.id), respuestasArray)
+      const resultado = await cuestionariosService.enviarRespuestasCompletas(
+        Number(params.id),
+        respuestasArray
+      )
 
       toast({
         title: "Cuestionario enviado",
-        description: "Tus respuestas han sido guardadas exitosamente",
+        description: `Calificación: ${resultado.calificacion}% - ${resultado.aprobado ? 'Aprobado' : 'Reprobado'}`,
       })
 
       router.push("/estudiante/dashboard")
@@ -144,6 +148,7 @@ export default function TomarCuestionarioPage() {
   const pregunta = preguntas[preguntaActual]
   const progreso = ((preguntaActual + 1) / preguntas.length) * 100
   const respuestasCompletadas = Object.keys(respuestas).length
+  const respuestaActual = respuestas[pregunta.id]
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -181,38 +186,21 @@ export default function TomarCuestionarioPage() {
       </div>
 
       {pregunta && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl text-balance">{pregunta.textoPregunta}</CardTitle>
-            <CardDescription>Selecciona la respuesta correcta</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={respuestas[pregunta.id]?.toString()}
-              onValueChange={(value) => seleccionarRespuesta(pregunta.id, Number(value))}
-            >
-              <div className="space-y-3">
-                {pregunta.respuestas?.map((respuesta) => (
-                  <div
-                    key={respuesta.id}
-                    className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent transition-colors"
-                  >
-                    <RadioGroupItem value={respuesta.id.toString()} id={`respuesta-${respuesta.id}`} />
-                    <Label htmlFor={`respuesta-${respuesta.id}`} className="flex-1 cursor-pointer text-base">
-                      {respuesta.textoRespuesta}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </CardContent>
-          <CardFooter className="flex items-center justify-between">
+        <>
+          <PreguntaFactory
+            pregunta={pregunta}
+            respuesta={respuestaActual}
+            onRespuestaSeleccionada={manejarRespuestaSeleccionada}
+            readonly={enviando}
+          />
+          
+          <CardFooter className="flex items-center justify-between px-0">
             <Button variant="outline" onClick={preguntaAnterior} disabled={preguntaActual === 0}>
               Anterior
             </Button>
 
             <div className="flex items-center gap-2">
-              {respuestas[pregunta.id] ? (
+              {respuestaActual ? (
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
               ) : (
                 <AlertCircle className="h-5 w-5 text-yellow-600" />
@@ -234,7 +222,7 @@ export default function TomarCuestionarioPage() {
               </Button>
             )}
           </CardFooter>
-        </Card>
+        </>
       )}
 
       <div className="mt-6 grid grid-cols-5 sm:grid-cols-10 gap-2">
