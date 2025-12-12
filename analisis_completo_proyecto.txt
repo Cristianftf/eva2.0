@@ -1,0 +1,754 @@
+# ANÁLISIS COMPLETO DEL PROYECTO EVA 2.0 - ENTORNO VIRTUAL DE APRENDIZAJE
+
+## INFORMACIÓN GENERAL DEL PROYECTO
+
+**Nombre del Proyecto:** EduSearch - Entorno Virtual de Aprendizaje
+**Versión:** 2.0
+**Tipo:** Plataforma educativa completa
+**Arquitectura:** Full-stack (Frontend + Backend)
+
+### Descripción General
+Sistema completo de gestión de aprendizaje en línea con paneles diferenciados para administradores, profesores y estudiantes. Incluye gestión de cursos, evaluación de conocimientos, sistema de chat, notificaciones y recursos multimedia.
+
+---
+
+## ARQUITECTURA TÉCNICA
+
+### Frontend (Next.js)
+- **Framework:** Next.js 16 con App Router
+- **Lenguaje:** TypeScript
+- **UI Framework:** React 19 con shadcn/ui y Radix UI
+- **Estilos:** Tailwind CSS v4
+- **Gestión de Estado:** React Context API + React Query (TanStack)
+- **Internacionalización:** react-i18next
+- **Puerto:** 3000 (desarrollo), configurable en producción
+
+### Backend (Spring Boot)
+- **Framework:** Spring Boot 3.5.8
+- **Lenguaje:** Java 21
+- **ORM:** JPA/Hibernate
+- **Base de Datos:** PostgreSQL
+- **Seguridad:** Spring Security + JWT
+- **Puerto:** 8080
+- **Arquitectura:** MVC con capas de Controller, Service, Repository
+
+### Infraestructura Adicional
+- **Base de Datos:** PostgreSQL (puerto 5432)
+- **Almacenamiento:** MinIO (puerto 9000/9001)
+- **Monitoreo:** Prometheus (puerto 9090) + Grafana (puerto 3001)
+- **Emails:** MailHog (puerto 1025/8025)
+- **Contenedorización:** Docker + Docker Compose
+
+---
+
+## FUNCIONALIDADES PRINCIPALES
+
+### 1. AUTENTICACIÓN Y REGISTRO
+**Ubicación:** `app/auth/`, `components/auth/`, `lib/services/auth.service.ts`
+
+#### Componentes que conforman la funcionalidad:
+- `app/auth/login/page.tsx` - Página de inicio de sesión
+- `app/auth/register/page.tsx` - Página de registro
+- `components/auth/login-form.tsx` - Formulario de login
+- `components/auth/register-form.tsx` - Formulario de registro
+- `lib/context/auth.context.tsx` - Contexto global de autenticación
+- `lib/services/auth.service.ts` - Servicio de API para autenticación
+- `middleware.ts` - Middleware de Next.js para protección de rutas
+- `components/layout/protected-route.tsx` - Componente de protección de rutas
+
+#### Flujo de comunicación Frontend-Backend:
+1. **Registro:**
+   - Frontend: `POST /api/auth/register` con datos de usuario
+   - Backend: Valida datos, encripta password, guarda usuario, genera JWT
+   - Respuesta: Token JWT + datos de usuario
+
+2. **Login:**
+   - Frontend: `POST /api/auth/login` con email/password
+   - Backend: Valida credenciales, genera JWT si correcto
+   - Respuesta: Token JWT + datos de usuario
+
+3. **Verificación de sesión:**
+   - Frontend: `GET /api/auth/me` con token en header
+   - Backend: Valida JWT y retorna datos del usuario actual
+
+#### Seguridad implementada:
+- JWT tokens almacenados en cookies HTTP-only
+- Validación de roles en rutas protegidas (middleware Next.js)
+- Encriptación BCrypt para contraseñas
+- Protección CSRF
+- Rate limiting en backend
+- Validación de inputs en formularios
+- Sanitización de datos
+
+---
+
+### 2. DASHBOARD POR ROLES
+**Ubicación:** `app/*/dashboard/`, `components/*/`
+
+#### Componentes por rol:
+
+**Estudiante (`app/estudiante/dashboard/`):**
+- Estadísticas personales (cursos inscritos, completados, progreso promedio)
+- Tabs: Mis Cursos, Cursos Disponibles, Mis Calificaciones
+- `components/estudiante/mis-cursos-tab.tsx`
+- `components/estudiante/cursos-disponibles-tab.tsx`
+- `components/estudiante/mis-calificaciones-tab.tsx`
+
+**Profesor (`app/profesor/dashboard/`):**
+- Gestión de cursos propios
+- Estadísticas de estudiantes
+- Creación de cuestionarios
+- `components/profesor/mis-cursos-profesor-tab.tsx`
+- `components/profesor/crear-curso-tab.tsx`
+- `components/profesor/estudiantes-curso-tab.tsx`
+- `components/profesor/cuestionarios-curso-tab.tsx`
+
+**Administrador (`app/admin/dashboard/`):**
+- Gestión de usuarios, cursos, recursos
+- Estadísticas globales del sistema
+- `components/admin/usuarios-tab.tsx`
+- `components/admin/cursos-tab.tsx`
+- `components/admin/estadisticas-tab.tsx`
+
+#### Flujo de comunicación:
+- Carga inicial: Múltiples llamadas API para estadísticas según rol
+- Actualización en tiempo real: Polling o WebSockets (planeado)
+- Navegación protegida por roles
+
+#### Seguridad:
+- Validación de permisos por rol en cada endpoint
+- Filtros de datos según usuario autenticado
+- Auditoría de acciones administrativas
+
+---
+
+### 3. GESTIÓN DE CURSOS
+**Ubicación:** `app/profesor/curso/`, `app/estudiante/curso/`, `backend/src/main/java/com/backendeva/backend/controller/CursoController.java`
+
+#### Componentes que conforman la funcionalidad:
+
+**Para Profesores:**
+- `components/profesor/crear-curso-tab.tsx` - Crear nuevo curso
+- `components/profesor/contenido-curso-tab.tsx` - Agregar temas y contenido
+- `components/profesor/estudiantes-curso-tab.tsx` - Ver estudiantes inscritos
+- `components/profesor/solicitudes-inscripcion-tab.tsx` - Gestionar solicitudes
+
+**Para Estudiantes:**
+- `components/estudiante/mis-cursos-tab.tsx` - Ver cursos inscritos
+- `components/estudiante/cursos-disponibles-tab.tsx` - Explorar cursos disponibles
+
+#### Flujo de comunicación:
+1. **Creación de curso:**
+   - POST /api/cursos con datos del curso
+   - Backend: Valida profesor, guarda curso
+
+2. **Inscripción:**
+   - POST /api/cursos/{id}/inscribir
+   - Backend: Verifica cupo, crea inscripción
+
+3. **Contenido del curso:**
+   - GET /api/cursos/{id}/temas - Lista temas
+   - GET /api/temas/{id}/multimedia - Contenido multimedia
+
+#### Seguridad:
+- Solo profesores pueden crear cursos
+- Estudiantes solo pueden inscribirse a cursos activos
+- Validación de propiedad del curso para ediciones
+
+---
+
+### 4. CUESTIONARIOS Y EVALUACIONES
+**Ubicación:** `app/estudiante/cuestionario/`, `components/preguntas/`, `backend/src/main/java/com/backendeva/backend/controller/CuestionarioController.java`
+
+#### Tipos de preguntas soportadas:
+- Verdadero/Falso (`verdadero-falso-pregunta.tsx`)
+- Completar texto (`completar-texto-pregunta.tsx`)
+- Arrastrar y soltar (`arrastrar-soltar-pregunta.tsx`)
+- Ordenar elementos (`ordenar-elementos-pregunta.tsx`)
+
+#### Componentes principales:
+- `components/preguntas/pregunta-factory.tsx` - Factory para renderizar preguntas
+- `components/preguntas/accessible-pregunta.tsx` - Versión accesible
+- `components/profesor/crear-cuestionario-modal.tsx` - Modal de creación
+
+#### Flujo de comunicación:
+1. **Creación:**
+   - POST /api/cuestionarios con preguntas JSON
+   - Backend: Valida estructura, guarda cuestionario
+
+2. **Realización:**
+   - GET /api/cuestionarios/curso/{cursoId} - Obtener cuestionarios
+   - POST /api/cuestionarios/{id}/responder - Enviar respuestas
+   - Backend: Califica automáticamente, guarda resultados
+
+3. **Resultados:**
+   - GET /api/resultados/cuestionario/{id} - Ver calificaciones
+
+#### Seguridad:
+- Temporizador para evitar copias
+- Validación de respuestas en backend
+- Prevención de múltiples intentos no autorizados
+
+---
+
+### 5. RECURSOS MULTIMEDIA
+**Ubicación:** `components/multimedia/`, `backend/src/main/java/com/backendeva/backend/controller/MultimediaController.java`
+
+#### Componentes:
+- `components/multimedia/media-player.tsx` - Reproductor principal
+- `components/multimedia/media-viewer.tsx` - Visor de archivos
+- `components/profesor/gestion-multimedia-tab.tsx` - Gestión de archivos
+
+#### Tipos soportados:
+- Video (MP4, WebM)
+- Audio (MP3, WAV)
+- Documentos (PDF, DOC, TXT)
+- Imágenes (JPG, PNG, GIF)
+
+#### Flujo de comunicación:
+1. **Subida:**
+   - POST /api/multimedia/upload con FormData
+   - Backend: Procesa archivo, guarda en MinIO, registra en BD
+
+2. **Reproducción:**
+   - GET /api/multimedia/{id}/stream - Streaming de video/audio
+   - GET /api/multimedia/{id}/download - Descarga de archivos
+
+#### Seguridad:
+- Validación de tipos de archivo
+- Límites de tamaño de archivos
+- Control de acceso por curso/inscripción
+
+---
+
+### 6. SISTEMA DE CHAT
+**Ubicación:** `app/chat/`, `components/chat/`, `backend/src/main/java/com/backendeva/backend/controller/MensajesController.java`
+
+#### Componentes:
+- `app/chat/page.tsx` - Página principal del chat
+- `components/chat/chat-widget.tsx` - Widget flotante
+- `components/chat/chat-button.tsx` - Botón de acceso
+
+#### Funcionalidades:
+- Chat entre estudiantes y profesores
+- Mensajes por curso
+- Notificaciones de mensajes nuevos
+- Historial de conversaciones
+
+#### Flujo de comunicación:
+1. **Conversaciones:**
+   - GET /api/mensajes/conversacion/{userId1}/{userId2}
+   - Backend: Filtra por curso si aplica
+
+2. **Envío:**
+   - POST /api/mensajes/enviar con contenido
+   - Backend: Valida permisos, guarda mensaje
+
+3. **Tiempo real (planeado):**
+   - WebSockets para notificaciones instantáneas
+
+#### Seguridad:
+- Solo usuarios del mismo curso pueden chatear
+- Filtro de contenido ofensivo (planeado)
+- Auditoría de mensajes
+
+---
+
+### 7. NOTIFICACIONES
+**Ubicación:** `app/notificaciones/`, `components/notifications/`, `backend/src/main/java/com/backendeva/backend/controller/NotificacionesController.java`
+
+#### Componentes:
+- `app/notificaciones/page.tsx` - Centro de notificaciones
+- `components/notifications/notification-toast.tsx` - Toasts emergentes
+- `components/notifications/notifications-button.tsx` - Botón con contador
+
+#### Tipos de notificaciones:
+- Nuevos cursos disponibles
+- Calificaciones de cuestionarios
+- Mensajes del chat
+- Recordatorios de tareas
+- Actualizaciones del sistema
+
+#### Flujo de comunicación:
+1. **Obtener notificaciones:**
+   - GET /api/notificaciones/usuario/{usuarioId}
+   - Backend: Filtra no leídas primero
+
+2. **Marcar como leída:**
+   - PUT /api/notificaciones/{id}/leer
+
+3. **Crear notificación:**
+   - POST /api/notificaciones (desde backend para eventos)
+
+#### Seguridad:
+- Notificaciones solo para el usuario destinatario
+- No se pueden modificar notificaciones de otros usuarios
+
+---
+
+### 8. INFORMES Y ESTADÍSTICAS
+**Ubicación:** `components/profesor/informes-tab.tsx`, `backend/src/main/java/com/backendeva/backend/controller/EstadisticasController.java`
+
+#### Componentes:
+- `components/profesor/informes-tab.tsx` - Generación de informes
+- Dashboard con métricas en tiempo real
+
+#### Tipos de informes:
+- Progreso individual de estudiantes
+- Rendimiento por curso
+- Estadísticas globales del profesor
+- Comparativas de rendimiento
+
+#### Flujo de comunicación:
+1. **Estadísticas:**
+   - GET /api/estadisticas/profesor/{profesorId}
+   - GET /api/estadisticas/curso/{cursoId}
+
+2. **Informes detallados:**
+   - GET /api/informes/curso/{cursoId}/estudiante/{estudianteId}
+   - POST /api/informes/generar - Generar PDF
+
+#### Seguridad:
+- Solo profesores pueden ver informes de sus cursos
+- Administradores pueden ver todo
+
+---
+
+### 9. RECURSOS CONFIABLES
+**Ubicación:** `app/recursos/`, `components/recursos/`, `backend/src/main/java/com/backendeva/backend/controller/RecursoController.java`
+
+#### Componentes:
+- `app/recursos/page.tsx` - Página de recursos
+- `components/recursos/recurso-card.tsx` - Tarjeta de recurso
+- `components/recursos/recursos-filters.tsx` - Filtros de búsqueda
+
+#### Funcionalidades:
+- Catálogo de recursos externos confiables
+- Búsqueda y filtros por categoría
+- Sistema de evaluación CRAAP
+- Links verificados
+
+#### Flujo de comunicación:
+- GET /api/recursos - Lista con paginación
+- GET /api/recursos/{id} - Detalle de recurso
+- POST /api/recursos - Crear nuevo recurso (admin)
+
+#### Seguridad:
+- Recursos verificados por administradores
+- Validación de URLs
+- Auditoría de accesos
+
+---
+
+### 10. SIMULADOR DE BÚSQUEDA
+**Ubicación:** `app/simulador-busqueda/`, `backend/src/main/java/com/backendeva/backend/controller/SimuladorBusquedaController.java`
+
+#### Funcionalidades:
+- Simulación de búsquedas en línea
+- Evaluación de estrategias de búsqueda
+- Seguimiento de resultados
+
+#### Flujo de comunicación:
+- POST /api/simulador/buscar - Ejecutar búsqueda simulada
+- GET /api/simulador/resultados/{id} - Ver resultados
+
+---
+
+### 11. GESTIÓN DE USUARIOS (ADMINISTRADOR)
+**Ubicación:** `components/admin/usuarios-tab.tsx`, `backend/src/main/java/com/backendeva/backend/controller/UsuarioController.java`
+
+#### Funcionalidades:
+- CRUD completo de usuarios
+- Cambio de roles
+- Activación/desactivación de cuentas
+- Reset de contraseñas
+
+#### Seguridad:
+- Solo administradores pueden gestionar usuarios
+- Auditoría completa de cambios
+- Validación de permisos
+
+---
+
+### 12. PERFIL DE USUARIO
+**Ubicación:** `app/perfil/`, `components/layout/dashboard-layout.tsx`
+
+#### Funcionalidades:
+- Edición de datos personales
+- Cambio de contraseña
+- Subida de foto de perfil
+- Configuración de notificaciones
+
+---
+
+## MÓDULOS DEL PROYECTO
+
+### Módulos del Frontend (Next.js)
+
+#### Páginas (`app/`):
+- `auth/` - Autenticación
+- `admin/dashboard/` - Panel administrativo
+- `estudiante/dashboard/` - Panel estudiante
+- `profesor/dashboard/` - Panel profesor
+- `chat/` - Sistema de mensajería
+- `notificaciones/` - Centro de notificaciones
+- `recursos/` - Recursos confiables
+- `perfil/` - Gestión de perfil
+- `configuracion/` - Configuración personal
+- `simulador/` - Simulador de búsqueda
+- `simulador-busqueda/` - Variante del simulador
+- `competencia-informacional/` - Competencia informacional
+
+#### Componentes (`components/`):
+- `admin/` - Componentes administrativos
+- `auth/` - Componentes de autenticación
+- `chat/` - Componentes de chat
+- `estudiante/` - Componentes para estudiantes
+- `profesor/` - Componentes para profesores
+- `layout/` - Layouts y navegación
+- `multimedia/` - Reproductores multimedia
+- `notifications/` - Sistema de notificaciones
+- `preguntas/` - Tipos de preguntas para cuestionarios
+- `recursos/` - Gestión de recursos
+- `ui/` - Componentes UI reutilizables (shadcn/ui)
+- `providers/` - Context providers
+- `accessibility/` - Componentes de accesibilidad
+
+#### Servicios (`lib/services/`):
+- `api.service.ts` - Servicio base de API
+- `auth.service.ts` - Autenticación
+- `courses.service.ts` - Gestión de cursos
+- `cuestionarios.service.ts` - Cuestionarios
+- `estadisticas.service.ts` - Estadísticas
+- `informes.service.ts` - Informes
+- `inscripciones.service.ts` - Inscripciones
+- `mensajes.service.ts` - Mensajes/chat
+- `multimedia.service.ts` - Archivos multimedia
+- `notificaciones.service.ts` - Notificaciones
+- `recursos.service.ts` - Recursos confiables
+- `temas.service.ts` - Temas de cursos
+- `usuarios.service.ts` - Gestión de usuarios
+
+#### Utilidades (`lib/`):
+- `config/api.config.ts` - Configuración de endpoints
+- `context/auth.context.tsx` - Contexto de autenticación
+- `hooks/` - Hooks personalizados
+- `types/index.ts` - Definiciones TypeScript
+- `utils.ts` - Utilidades generales
+
+### Módulos del Backend (Spring Boot)
+
+#### Controladores (`controller/`):
+- `AuthController.java` - Autenticación JWT
+- `CursoController.java` - Gestión de cursos
+- `CuestionarioController.java` - Cuestionarios y evaluaciones
+- `EstadisticasController.java` - Estadísticas y métricas
+- `InformesController.java` - Generación de informes
+- `InscripcionController.java` - Inscripciones a cursos
+- `MensajesController.java` - Sistema de chat
+- `MultimediaController.java` - Archivos multimedia
+- `NotificacionesController.java` - Notificaciones
+- `RecursoController.java` - Recursos confiables
+- `SimuladorBusquedaController.java` - Simulador de búsqueda
+- `TemaController.java` - Temas de cursos
+- `UsuarioController.java` - Gestión de usuarios
+
+#### Servicios (`services/`):
+- `AuthService.java` - Lógica de autenticación
+- `JwtService.java` - Gestión de tokens JWT
+- `CursoService.java` - Lógica de cursos
+- `CuestionarioService.java` - Lógica de cuestionarios
+- `EstadisticasService.java` - Cálculos estadísticos
+- `InformesService.java` - Generación de informes
+- `InscripcionService.java` - Gestión de inscripciones
+- `MensajesService.java` - Sistema de mensajería
+- `MultimediaService.java` - Gestión de archivos
+- `NotificacionesService.java` - Sistema de notificaciones
+- `RecursoService.java` - Gestión de recursos
+- `SimuladorBusquedaService.java` - Lógica del simulador
+- `TemaService.java` - Gestión de temas
+- `UsuarioService.java` - Gestión de usuarios
+
+#### Repositorios (`repository/`):
+- `UserRepository.java` - Usuarios
+- `CursoRepository.java` - Cursos
+- `CuestionarioRepository.java` - Cuestionarios
+- `InscripcionRepository.java` - Inscripciones
+- `MensajeRepository.java` - Mensajes
+- `MultimediaRepository.java` - Archivos multimedia
+- `NotificacionRepository.java` - Notificaciones
+- `RecursoRepository.java` - Recursos
+- `TemaRepository.java` - Temas
+- `ResultadoRepository.java` - Resultados de evaluaciones
+
+#### Modelos (`model/`):
+- `User.java` - Entidad Usuario
+- `Curso.java` - Entidad Curso
+- `Tema.java` - Entidad Tema
+- `MultimediaItem.java` - Archivos multimedia
+- `Cuestionario.java` - Cuestionarios
+- `Pregunta.java` - Preguntas
+- `Respuesta.java` - Respuestas
+- `Resultado.java` - Resultados de evaluaciones
+- `Inscripcion.java` - Inscripciones
+- `Mensaje.java` - Mensajes
+- `Notificacion.java` - Notificaciones
+
+#### DTOs (`dto/`):
+- `LoginDto.java` - Datos de login
+- `RegisterDto.java` - Datos de registro
+- `AuthResponseDto.java` - Respuesta de autenticación
+- `EstadisticasDto.java` - Datos estadísticos
+- `InformeCursoDto.java` - Datos de informes
+
+#### Configuración (`config/`):
+- `SecurityConfig.java` - Configuración de Spring Security
+- `WebConfig.java` - Configuración CORS
+- `CacheConfig.java` - Configuración de caché
+- `OpenApiConfig.java` - Documentación Swagger/OpenAPI
+- `RateLimitAspect.java` - Control de tasa de peticiones
+
+#### Utilidades (`utils/`):
+- `AppConstants.java` - Constantes de la aplicación
+
+---
+
+## GUÍA DE INSTALACIÓN Y CONFIGURACIÓN
+
+### Prerrequisitos del Sistema
+- **Node.js:** v18+ (recomendado v20+)
+- **Java:** JDK 21+
+- **PostgreSQL:** v13+
+- **Docker:** v20+ (opcional pero recomendado)
+- **Git:** Para clonar el repositorio
+
+### Instalación Paso a Paso
+
+#### 1. Clonar el Repositorio
+```bash
+git clone <url-del-repositorio>
+cd eva2.0
+```
+
+#### 2. Configurar Variables de Entorno
+Crear archivo `.env.local` en la raíz del proyecto:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+```
+
+#### 3. Instalar Dependencias del Frontend
+```bash
+npm install
+```
+
+#### 4. Configurar PostgreSQL
+```sql
+-- Crear base de datos
+CREATE DATABASE eva_db;
+
+-- Crear usuario (opcional)
+CREATE USER eva_user WITH PASSWORD 'eva_password';
+GRANT ALL PRIVILEGES ON DATABASE eva_db TO eva_user;
+```
+
+#### 5. Configurar Backend
+- Verificar `backend/src/main/resources/application.properties`
+- Ajustar configuración de BD si es necesario
+
+#### 6. Ejecutar con Docker (Método Recomendado)
+```bash
+# Desde la raíz del proyecto
+docker-compose up -d
+```
+
+Esto iniciará:
+- PostgreSQL en puerto 5432
+- Backend Spring Boot en puerto 8080
+- Frontend Next.js en puerto 3000
+- MinIO en puertos 9000/9001
+- Prometheus en puerto 9090
+- Grafana en puerto 3001
+- MailHog en puertos 1025/8025
+
+#### 7. Ejecutar Manualmente (Alternativo)
+
+**Backend:**
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+**Frontend:**
+```bash
+npm run dev
+```
+
+#### 8. Acceder a la Aplicación
+- **Aplicación principal:** http://localhost:3000
+- **Backend API:** http://localhost:8080/api
+- **MinIO Console:** http://localhost:9001 (admin/admin)
+- **Grafana:** http://localhost:3001 (admin/admin)
+- **MailHog:** http://localhost:8025
+
+### Configuración de Usuarios Iniciales
+
+El backend incluye datos de ejemplo en las migraciones SQL:
+- `backend/src/main/resources/db/migration/V2__Seed_data.sql`
+
+Usuarios de prueba incluidos:
+- **Admin:** admin@eva.com / admin123 (ROL: ADMIN)
+- **Profesor:** profesor@eva.com / profesor123 (ROL: PROFESOR)
+- **Estudiante:** estudiante@eva.com / estudiante123 (ROL: ESTUDIANTE)
+
+### Verificación de Instalación
+
+1. Acceder a http://localhost:3000
+2. Intentar login con credenciales de prueba
+3. Verificar que los dashboards carguen correctamente
+4. Probar funcionalidades básicas (ver cursos, etc.)
+
+---
+
+## MEDIDAS DE SEGURIDAD IMPLEMENTADAS
+
+### Autenticación y Autorización
+- **JWT Tokens:** Firmados y verificados en cada petición
+- **Refresh Tokens:** Para mantener sesiones activas
+- **BCrypt:** Encriptación de contraseñas con salt
+- **Role-based Access Control:** Validación de permisos por endpoint
+- **Session Management:** Stateless con JWT
+
+### Protección de API
+- **Rate Limiting:** Control de peticiones por IP/usuario
+- **CORS:** Configurado solo para orígenes permitidos
+- **Input Validation:** Validación de datos en backend y frontend
+- **SQL Injection Prevention:** Prepared statements con JPA
+- **XSS Protection:** Sanitización de inputs
+- **CSRF Protection:** Tokens en formularios
+
+### Seguridad de Datos
+- **Encriptación en tránsito:** HTTPS obligatorio en producción
+- **Almacenamiento seguro:** MinIO para archivos multimedia
+- **Auditoría:** Logs de acciones sensibles
+- **Data Sanitization:** Limpieza de datos antes de guardar
+
+### Seguridad de Infraestructura
+- **Container Security:** Imágenes Docker oficiales y actualizadas
+- **Secrets Management:** Variables de entorno para credenciales
+- **Network Security:** Comunicación interna entre contenedores
+- **Monitoring:** Prometheus/Grafana para detectar anomalías
+
+---
+
+## URLs Y ENDPOINTS PRINCIPALES
+
+### Frontend
+- `/` - Página de inicio
+- `/auth/login` - Login
+- `/auth/register` - Registro
+- `/dashboard` - Dashboard adaptativo por rol
+- `/admin/dashboard` - Panel admin
+- `/profesor/dashboard` - Panel profesor
+- `/estudiante/dashboard` - Panel estudiante
+- `/chat` - Sistema de chat
+- `/notificaciones` - Centro de notificaciones
+- `/recursos` - Recursos confiables
+- `/perfil` - Perfil de usuario
+- `/configuracion` - Configuración
+
+### Backend API (Principales)
+- `POST /api/auth/login` - Autenticación
+- `POST /api/auth/register` - Registro
+- `GET /api/auth/me` - Usuario actual
+- `GET /api/cursos` - Lista de cursos
+- `POST /api/cursos` - Crear curso
+- `GET /api/cursos/{id}` - Detalle de curso
+- `POST /api/cursos/{id}/inscribir` - Inscripción
+- `GET /api/cuestionarios/curso/{cursoId}` - Cuestionarios
+- `POST /api/cuestionarios/{id}/responder` - Enviar respuestas
+- `GET /api/mensajes/conversacion/{userId1}/{userId2}` - Chat
+- `POST /api/mensajes/enviar` - Enviar mensaje
+- `GET /api/notificaciones/usuario/{usuarioId}` - Notificaciones
+- `GET /api/estadisticas/profesor/{profesorId}` - Estadísticas
+- `GET /api/recursos` - Recursos confiables
+
+---
+
+## CARACTERÍSTICAS TÉCNICAS AVANZADAS
+
+### Rendimiento
+- **Lazy Loading:** Componentes cargados bajo demanda
+- **Code Splitting:** Separación automática de bundles
+- **Caching:** Estrategias de caché en backend y frontend
+- **CDN:** Archivos estáticos servidos desde CDN
+- **Database Indexing:** Índices optimizados en PostgreSQL
+
+### Accesibilidad
+- **WCAG 2.1 AA:** Cumplimiento de estándares
+- **Navegación por teclado:** Soporte completo
+- **Screen Readers:** Etiquetas ARIA apropiadas
+- **Contraste de color:** Ratios WCAG aprobados
+- **Responsive Design:** Adaptable a todos los dispositivos
+
+### Escalabilidad
+- **Microservicios Ready:** Arquitectura preparada para separación
+- **Database Sharding:** Soporte para múltiples instancias
+- **Load Balancing:** Configuración para múltiples instancias
+- **Caching Distributed:** Redis preparado
+- **Message Queue:** Preparado para RabbitMQ/Kafka
+
+---
+
+## DEPURACIÓN Y MONITORING
+
+### Logs
+- **Backend:** SLF4J con Logback
+- **Frontend:** Console logs en desarrollo
+- **Niveles:** ERROR, WARN, INFO, DEBUG
+
+### Métricas
+- **Prometheus:** Métricas de aplicación
+- **Grafana:** Dashboards de monitoreo
+- **Health Checks:** Endpoints de salud en Spring Boot
+- **Performance:** Métricas de respuesta y throughput
+
+### Debugging
+- **DevTools:** Spring Boot DevTools activado
+- **Hot Reload:** Next.js con fast refresh
+- **Source Maps:** Para debugging en producción
+- **Error Boundaries:** Captura de errores en React
+
+---
+
+## PLANES DE MEJORA FUTUROS
+
+### Funcionalidades Pendientes
+- [ ] WebSockets para chat en tiempo real
+- [ ] Sistema de gamificación con badges
+- [ ] Videoconferencias integradas
+- [ ] App móvil nativa
+- [ ] IA para recomendaciones de cursos
+- [ ] Soporte multiidioma completo
+- [ ] Modo offline
+- [ ] Exportación de informes en PDF
+- [ ] Integración con LMS externos
+- [ ] Editor WYSIWYG para contenido
+
+### Mejoras Técnicas
+- [ ] Migración a React Server Components
+- [ ] Implementación de GraphQL
+- [ ] Microservicios separados
+- [ ] CI/CD completo
+- [ ] Testing automatizado completo
+- [ ] Performance optimization
+- [ ] Security hardening adicional
+
+---
+
+## CONCLUSIÓN
+
+Este proyecto EVA 2.0 representa una plataforma educativa completa y robusta, diseñada con las mejores prácticas de desarrollo moderno. La arquitectura separa claramente responsabilidades entre frontend y backend, implementa medidas de seguridad exhaustivas, y está preparada para escalar según las necesidades de crecimiento.
+
+La documentación completa y la configuración Docker facilitan el despliegue tanto en desarrollo como en producción. El sistema de roles permite una gestión granular de permisos, y las funcionalidades educativas cubren todos los aspectos necesarios para un entorno virtual de aprendizaje efectivo.
+
+Para cualquier persona que desee trabajar con este proyecto, se recomienda seguir la guía de instalación paso a paso y familiarizarse primero con la estructura de módulos antes de realizar modificaciones.

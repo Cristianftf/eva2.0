@@ -5,11 +5,13 @@ import com.backendeva.backend.dto.LoginDto;
 import com.backendeva.backend.model.User;
 import com.backendeva.backend.repository.UserRepository;
 import com.backendeva.backend.services.AuthService;
+import com.backendeva.backend.services.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -26,6 +28,12 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private AuthService authService;
@@ -76,6 +84,7 @@ class AuthServiceTest {
         user.setRol("ESTUDIANTE");
 
         when(userRepository.findFirstByEmailOrderByIdAsc("test@example.com")).thenReturn(Optional.of(user));
+        doNothing().when(authenticationManager).authenticate(any());
 
         // When
         User result = authService.login(loginDto);
@@ -83,6 +92,7 @@ class AuthServiceTest {
         // Then
         assertNotNull(result);
         assertEquals("test@example.com", result.getEmail());
+        verify(authenticationManager).authenticate(any());
     }
 
     @Test
