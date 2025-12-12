@@ -13,18 +13,19 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/context/auth.context"
 import { mensajesService } from "@/lib/services/mensajes.service"
 import { usuariosService } from "@/lib/services/usuarios.service"
-import type { Mensaje, Usuario } from "@/lib/types"
+import type { Mensaje, User } from "@/lib/types"
 import { Search, Send, MessageSquare, Loader2 } from "lucide-react"
 
 export default function ChatPage() {
   const { user } = useAuth()
-  const [conversaciones, setConversaciones] = useState<Usuario[]>([])
-  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null)
+  const [conversaciones, setConversaciones] = useState<User[]>([])
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [nuevoMensaje, setNuevoMensaje] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -113,12 +114,10 @@ export default function ChatPage() {
     return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase()
   }
 
-  const isUserOnline = (lastSeen: string | undefined) => {
-    if (!lastSeen) return false
-    const lastSeenDate = new Date(lastSeen)
-    const now = new Date()
-    const diffMinutes = (now.getTime() - lastSeenDate.getTime()) / (1000 * 60)
-    return diffMinutes < 5 // Online si visto en los últimos 5 minutos
+  const isUserOnline = (user: User) => {
+    // Por ahora, consideramos que todos los usuarios están offline
+    // En una implementación futura se podría agregar estado de conexión en tiempo real
+    return false
   }
 
   return (
@@ -169,9 +168,6 @@ export default function ChatPage() {
                               {getInitials(usuario.nombre, usuario.apellido)}
                             </AvatarFallback>
                           </Avatar>
-                          {isUserOnline(usuario.lastSeen) && (
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                          )}
                         </div>
                         <div className="flex-1 text-left">
                           <div className="flex items-center justify-between mb-1">
@@ -182,17 +178,9 @@ export default function ChatPage() {
                               <Badge variant="secondary" className="text-xs">
                                 {usuario.rol}
                               </Badge>
-                              {isUserOnline(usuario.lastSeen) && (
-                                <div className="w-2 h-2 bg-green-500 rounded-full" title="En línea"></div>
-                              )}
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{usuario.email}</p>
-                          {!isUserOnline(usuario.lastSeen) && usuario.lastSeen && (
-                            <p className="text-xs text-muted-foreground">
-                              Última vez: {new Date(usuario.lastSeen).toLocaleDateString()}
-                            </p>
-                          )}
                         </div>
                       </button>
                     ))}

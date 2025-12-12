@@ -169,9 +169,9 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
     <Card className={className}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             {getIcon()}
-            <CardTitle className="text-lg">{media.titulo}</CardTitle>
+            <CardTitle className="text-lg">{media.url || 'Archivo multimedia'}</CardTitle>
           </div>
           <Badge className={getTypeColor()}>
             {media.tipo.charAt(0).toUpperCase() + media.tipo.slice(1)}

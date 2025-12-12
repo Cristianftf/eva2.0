@@ -15,7 +15,9 @@ class MensajesService {
 
   // Obtener conversación entre dos usuarios
   async getConversacion(userId1: string, userId2: string): Promise<ApiResponse<Mensaje[]>> {
-    return apiService.get<Mensaje[]>(API_ENDPOINTS.messages.conversacion(userId1, userId2))
+    // Ordenar IDs para consistencia en la URL
+    const [id1, id2] = [userId1, userId2].sort()
+    return apiService.get<Mensaje[]>(API_ENDPOINTS.messages.conversacion(id1, id2))
   }
 
   // Obtener mensajes de un curso
@@ -35,7 +37,7 @@ class MensajesService {
 
   // Marcar mensaje como leído
   async marcarLeido(id: string): Promise<ApiResponse<Mensaje>> {
-    return apiService.patch<Mensaje>(API_ENDPOINTS.messages.marcarLeido(id), {})
+    return apiService.patch<Mensaje>(`${API_ENDPOINTS.messages.base}/${id}/leer`, {})
   }
 
   // Eliminar mensaje

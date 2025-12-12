@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/lib/context/auth.context"
 import { multimediaService } from "@/lib/services/multimedia.service"
 import { coursesService } from "@/lib/services/courses.service"
+import { temasService } from "@/lib/services/temas.service"
 import type { MultimediaItem, Tema } from "@/lib/types"
 import { Upload, FileText, Image, Video, Music, Trash2, Download } from "lucide-react"
 
@@ -48,7 +49,7 @@ export function GestionMultimediaTab() {
           if (cursosResult.success && cursosResult.data) {
             const cursoIds = cursosResult.data.map(c => c.id)
             const filteredMultimedia = multimediaResult.data.filter(item =>
-              item.tema && cursoIds.includes(item.tema.curso?.id)
+              item.temaId && cursoIds.includes(item.temaId)
             )
             setMultimedia(filteredMultimedia)
           }
@@ -57,18 +58,25 @@ export function GestionMultimediaTab() {
         }
       }
 
-      // Cargar temas para el formulario de subida
+      // Cargar temas para el formulario de subida (solo para profesores, no admin)
       if (user.rol !== 'ADMIN') {
         const cursosResult = await coursesService.getCoursesByProfesor(user.id)
         if (cursosResult.success && cursosResult.data) {
           const allTemas: Tema[] = []
           for (const curso of cursosResult.data) {
-            const temasResult = await coursesService.getCourseTopics(curso.id)
+            // Usar el servicio de temas directamente para obtener temas del curso
+            const temasResult = await temasService.getByCurso(curso.id.toString())
             if (temasResult.success && temasResult.data) {
               allTemas.push(...temasResult.data)
             }
           }
           setTemas(allTemas)
+        }
+      } else {
+        // Para admin, cargar todos los temas disponibles
+        const allTemasResult = await temasService.getAll()
+        if (allTemasResult.success && allTemasResult.data) {
+          setTemas(allTemasResult.data)
         }
       }
 
@@ -185,7 +193,7 @@ export function GestionMultimediaTab() {
                   <SelectContent>
                     {temas.map((tema) => (
                       <SelectItem key={tema.id} value={tema.id}>
-                        {tema.titulo} - {tema.curso?.titulo}
+                        {tema.titulo}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -247,14 +255,14 @@ export function GestionMultimediaTab() {
               {multimedia.map((item) => (
                 <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    {getMultimediaIcon(item.tipo)}
+                    {getMultimediaIcon(item.tipo || 'documento')}
                     <div>
-                      <h4 className="font-medium">{item.nombreArchivo}</h4>
+                      <h4 className="font-medium">{item.url || 'Archivo multimedia'}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Tema: {item.tema?.titulo} | Curso: {item.tema?.curso?.titulo}
+                        Tema ID: {item.temaId} | Tipo: {item.tipo}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Tipo: {item.tipo} | Subido: {new Date(item.fechaSubida).toLocaleDateString()}
+                        ID: {item.id}
                       </p>
                     </div>
                   </div>

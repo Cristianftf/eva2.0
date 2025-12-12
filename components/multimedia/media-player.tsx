@@ -22,8 +22,8 @@ const getAbsoluteUrl = (url: string) => {
   if (url.startsWith('http')) {
     return url
   }
-  // Asumir que las URLs relativas son para el backend
-  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`
+  // Para URLs relativas, usar el proxy configurado en Next.js
+  return url.startsWith('/') ? url : `/${url}`
 }
 
 export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false, onComplete }: MediaPlayerProps) {

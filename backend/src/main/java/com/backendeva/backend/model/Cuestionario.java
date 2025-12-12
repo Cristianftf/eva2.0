@@ -18,6 +18,9 @@ public class Cuestionario {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column
+    private Integer duracionMinutos; // Duración estimada del cuestionario en minutos
+
     @Column(columnDefinition = "TEXT")
     private String qtiPayload; // XML payload para IMS QTI
 
@@ -84,5 +87,13 @@ public class Cuestionario {
 
     public void setQtiPayload(String qtiPayload) {
         this.qtiPayload = qtiPayload;
+    }
+
+    public Integer getDuracionMinutos() {
+        return duracionMinutos;
+    }
+
+    public void setDuracionMinutos(Integer duracionMinutos) {
+        this.duracionMinutos = duracionMinutos;
     }
 }

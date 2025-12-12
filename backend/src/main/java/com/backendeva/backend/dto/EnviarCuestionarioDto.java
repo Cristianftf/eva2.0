@@ -8,6 +8,6 @@ import java.util.List;
 @Getter
 @Setter
 public class EnviarCuestionarioDto {
-    private List<RespuestaDto> respuestas;
+    private List<RespuestaEstudianteDto> respuestas;
     private String estudianteId;
 }

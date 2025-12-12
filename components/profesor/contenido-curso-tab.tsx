@@ -161,10 +161,29 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
     e.preventDefault()
     if (!selectedTema || !uploadData.file) return
 
+    // Validar tipo de archivo
+    const allowedTypes = ['image/', 'video/', 'audio/', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
+    const fileName = uploadData.file!.name.toLowerCase()
+    const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt']
+    const isAllowedType = allowedTypes.some(type => uploadData.file!.type.startsWith(type)) ||
+                         allowedExtensions.some(ext => fileName.endsWith(ext))
+
+    if (!isAllowedType) {
+      alert("Tipo de archivo no permitido. Solo se permiten imágenes, videos, audio, PDFs, documentos Word y archivos de texto.")
+      return
+    }
+
+    // Validar tamaño del archivo (máximo 50MB)
+    const maxSize = 50 * 1024 * 1024 // 50MB
+    if (uploadData.file.size > maxSize) {
+      alert("El archivo es demasiado grande. El tamaño máximo permitido es 50MB.")
+      return
+    }
+
     setSubmitting(true)
 
     try {
-      const result = await multimediaService.upload(uploadData.file, selectedTema.id)
+      const result = await multimediaService.upload(uploadData.file, selectedTema.id, "documento")
 
       if (result.success && result.data) {
         setMultimedia({
@@ -174,12 +193,14 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
         setUploadDialogOpen(false)
         setSelectedTema(null)
         setUploadData({ file: null })
+        // Mostrar mensaje de éxito
+        alert("Archivo subido exitosamente")
       } else {
         alert(result.error || "Error al subir archivo")
       }
     } catch (error) {
       console.error("Error uploading multimedia:", error)
-      alert("Error de conexión al subir archivo")
+      alert("Error de conexión al subir archivo. Por favor, inténtalo de nuevo.")
     } finally {
       setSubmitting(false)
     }
@@ -398,15 +419,8 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
                             <div className="space-y-1">
                               {multimedia[tema.id].map((item) => (
                                 <div key={item.id} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  {getMultimediaIcon(item.tipo)}
-                                  <a
-                                    href={`http://localhost:8080${item.urlArchivo}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:underline"
-                                  >
-                                    {item.nombreArchivo}
-                                  </a>
+                                  {getMultimediaIcon(item.tipo || 'documento')}
+                                  <span>{item.url || 'Archivo multimedia'}</span>
                                 </div>
                               ))}
                             </div>

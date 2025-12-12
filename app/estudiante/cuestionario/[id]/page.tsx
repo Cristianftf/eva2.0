@@ -89,9 +89,31 @@ export default function TomarCuestionarioPage() {
   }
 
   const enviarCuestionario = async () => {
+    // Validar que todas las preguntas tengan respuesta
+    const preguntasSinRespuesta = preguntas.filter(p => !respuestas[p.id])
+    if (preguntasSinRespuesta.length > 0) {
+      toast({
+        title: "Preguntas sin responder",
+        description: `Faltan ${preguntasSinRespuesta.length} pregunta(s) por responder`,
+        variant: "destructive",
+      })
+      return
+    }
+
     setEnviando(true)
     try {
       const respuestasArray = Object.values(respuestas)
+
+      // Verificar que todas las respuestas sean válidas
+      const respuestasInvalidas = respuestasArray.filter(r => r.respuesta === null || r.respuesta === undefined)
+      if (respuestasInvalidas.length > 0) {
+        toast({
+          title: "Respuestas inválidas",
+          description: "Algunas respuestas no son válidas. Por favor, revísalas.",
+          variant: "destructive",
+        })
+        return
+      }
 
       const resultado = await cuestionariosService.enviarRespuestasCompletas(
         Number(params.id),
@@ -99,15 +121,16 @@ export default function TomarCuestionarioPage() {
       )
 
       toast({
-        title: "Cuestionario enviado",
+        title: "Cuestionario enviado exitosamente",
         description: `Calificación: ${resultado.calificacion}% - ${resultado.aprobado ? 'Aprobado' : 'Reprobado'}`,
       })
 
       router.push("/estudiante/dashboard")
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error al enviar cuestionario:", error)
       toast({
-        title: "Error",
-        description: "No se pudo enviar el cuestionario",
+        title: "Error al enviar cuestionario",
+        description: error.message || "Ocurrió un error inesperado. Inténtalo de nuevo.",
         variant: "destructive",
       })
     } finally {

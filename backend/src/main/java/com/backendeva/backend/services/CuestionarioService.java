@@ -1,7 +1,8 @@
 package com.backendeva.backend.services;
 
 import com.backendeva.backend.dto.EnviarCuestionarioDto;
-import com.backendeva.backend.dto.RespuestaDto;
+import com.backendeva.backend.dto.RespuestaEstudianteDto;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.backendeva.backend.model.*;
 import com.backendeva.backend.repository.CuestionarioRepository;
 import com.backendeva.backend.repository.ResultadoRepository;
@@ -76,22 +77,25 @@ public class CuestionarioService {
             return response;
         }
 
-        // Procesar respuestas
+        // Procesar respuestas usando el nuevo formato
         int respuestasCorrectas = 0;
-        List<RespuestaDto> respuestasData = respuestas.getRespuestas();
+        List<RespuestaEstudianteDto> respuestasData = respuestas.getRespuestas();
 
         if (respuestasData != null) {
-            for (RespuestaDto respuestaData : respuestasData) {
+            for (RespuestaEstudianteDto respuestaData : respuestasData) {
                 Integer preguntaId = respuestaData.getPreguntaId();
-                Integer respuestaId = respuestaData.getRespuestaId();
 
-                if (preguntaId != null && respuestaId != null && preguntaId < preguntas.size()) {
-                    Pregunta pregunta = preguntas.get(preguntaId);
-                    List<Respuesta> opciones = pregunta.getRespuestas();
+                if (preguntaId != null) {
+                    // Buscar la pregunta por ID real, no por índice
+                    Pregunta pregunta = preguntas.stream()
+                        .filter(p -> p.getId().intValue() == preguntaId)
+                        .findFirst()
+                        .orElse(null);
 
-                    if (opciones != null && respuestaId < opciones.size()) {
-                        Respuesta respuestaSeleccionada = opciones.get(respuestaId);
-                        if (respuestaSeleccionada.getEsCorrecta()) {
+                    if (pregunta != null) {
+                        // Evaluar la respuesta según el tipo de pregunta
+                        boolean esCorrecta = evaluarRespuesta(pregunta, respuestaData.getRespuesta());
+                        if (esCorrecta) {
                             respuestasCorrectas++;
                         }
                     }

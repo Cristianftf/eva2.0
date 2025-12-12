@@ -5,7 +5,11 @@ import "./globals.css"
 import { SkipLinks } from "@/components/accessibility/skip-links"
 import { ClientProviders } from "@/components/providers/client-providers"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({
+  subsets: ["latin"],
+  preload: false,
+  display: "swap"
+})
 
 export const metadata: Metadata = {
   title: "EduSearch - Entorno Virtual de Aprendizaje",
