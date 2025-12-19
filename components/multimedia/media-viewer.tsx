@@ -58,9 +58,9 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                 preload="metadata"
                 onError={() => setError("Error al cargar el video")}
               >
-                <source src={media.url} type="video/mp4" />
-                <source src={media.url} type="video/webm" />
-                <source src={media.url} type="video/ogg" />
+                <source src={media.urlArchivo} type="video/mp4" />
+                <source src={media.urlArchivo} type="video/webm" />
+                <source src={media.urlArchivo} type="video/ogg" />
                 Tu navegador no soporta la reproducción de video.
               </video>
             </div>
@@ -74,9 +74,9 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                 className="w-full"
                 onError={() => setError("Error al cargar el audio")}
               >
-                <source src={media.url} type="audio/mp3" />
-                <source src={media.url} type="audio/wav" />
-                <source src={media.url} type="audio/ogg" />
+                <source src={media.urlArchivo} type="audio/mp3" />
+                <source src={media.urlArchivo} type="audio/wav" />
+                <source src={media.urlArchivo} type="audio/ogg" />
                 Tu navegador no soporta la reproducción de audio.
               </audio>
             </div>
@@ -86,8 +86,8 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
           return (
             <div className="bg-gray-50 p-4 rounded-lg">
               <img
-                src={media.url}
-                alt={media.titulo}
+                src={media.urlArchivo}
+                alt={media.nombreArchivo}
                 className="max-w-full h-auto rounded-lg shadow-md"
                 onError={() => setError("Error al cargar la imagen")}
               />
@@ -96,7 +96,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
 
         case "documento":
           // Para documentos, mostrar un iframe si es posible, o un enlace de descarga
-          if (media.url.includes('.pdf') || media.url.includes('.doc') || media.url.includes('.txt')) {
+          if (media.urlArchivo.includes('.pdf') || media.urlArchivo.includes('.doc') || media.urlArchivo.includes('.txt')) {
             return (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="text-center">
@@ -106,13 +106,13 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   </p>
                   <div className="flex gap-2 justify-center">
                     <Button asChild variant="outline" size="sm">
-                      <a href={media.url} target="_blank" rel="noopener noreferrer">
+                      <a href={media.urlArchivo} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="mr-2 h-4 w-4" />
                         Ver en nueva pestaña
                       </a>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                      <a href={media.url} download>
+                      <a href={media.urlArchivo} download>
                         <Download className="mr-2 h-4 w-4" />
                         Descargar
                       </a>
@@ -132,7 +132,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   Archivo disponible para descarga
                 </p>
                 <Button asChild variant="outline">
-                  <a href={media.url} download>
+                  <a href={media.urlArchivo} download>
                     <Download className="mr-2 h-4 w-4" />
                     Descargar archivo
                   </a>
@@ -150,7 +150,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   Contenido multimedia no soportado directamente
                 </p>
                 <Button asChild variant="outline">
-                  <a href={media.url} target="_blank" rel="noopener noreferrer">
+                  <a href={media.urlArchivo} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Abrir enlace externo
                   </a>
@@ -171,22 +171,22 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
         <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
             {getIcon()}
-            <CardTitle className="text-lg">{media.url || 'Archivo multimedia'}</CardTitle>
+            <CardTitle className="text-lg">{media.nombreArchivo || 'Archivo multimedia'}</CardTitle>
           </div>
           <Badge className={getTypeColor()}>
             {media.tipo.charAt(0).toUpperCase() + media.tipo.slice(1)}
           </Badge>
         </div>
 
-        {media.duracion && (
+        {media.duracionSegundos && (
           <div className="text-sm text-muted-foreground">
-            Duración: {Math.floor(media.duracion / 60)}:{(media.duracion % 60).toString().padStart(2, '0')}
+            Duración: {Math.floor(media.duracionSegundos / 60)}:{(media.duracionSegundos % 60).toString().padStart(2, '0')}
           </div>
         )}
 
-        {media.tamanio && (
+        {media.tamanioBytes && (
           <div className="text-sm text-muted-foreground">
-            Tamaño: {(media.tamanio / 1024 / 1024).toFixed(2)} MB
+            Tamaño: {(media.tamanioBytes / 1024 / 1024).toFixed(2)} MB
           </div>
         )}
       </CardHeader>

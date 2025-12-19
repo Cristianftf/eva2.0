@@ -17,14 +17,24 @@ export interface Curso {
   id: string
   titulo: string
   descripcion: string
+  objetivos?: string
   profesorId: string
   profesor?: User
   imagen?: string
   fechaCreacion: string
   fechaActualizacion: string
   activo: boolean
-  duracionEstimada?: number // en horas
-  nivel?: "basico" | "intermedio" | "avanzado"
+  duracionEstimada?: number | null // en horas
+  nivel?: "principiante" | "intermedio" | "avanzado" | string
+  categoria?: string
+  // Nuevos campos para cursos enriquecidos
+  prerrequisitos?: string
+  resultadosAprendizaje?: string
+  habilidades?: string
+  idioma?: string
+  precio?: number
+  imagenPortada?: string
+  etiquetas?: string
 }
 
 export interface Tema {
@@ -39,12 +49,15 @@ export interface Tema {
 
 export interface MultimediaItem {
   id: string
-  temaId: string
-  tipo: "video" | "audio" | "documento" | "imagen" | "enlace"
-  titulo: string
-  url: string
-  duracion?: number // para videos y audios en segundos
-  tamanio?: number // en bytes
+  nombreArchivo: string
+  tipo: string // video, audio, imagen, documento
+  urlArchivo: string
+  urlSubtitulos?: string
+  urlThumbnail?: string
+  tamanioBytes?: number
+  duracionSegundos?: number
+  temaId?: string
+  tema?: Tema
   fechaSubida: string
 }
 
@@ -107,6 +120,7 @@ export interface Inscripcion {
   progreso: number // 0-100
   completado: boolean
   fechaCompletado?: string
+  estado: "PENDIENTE" | "APROBADA" | "RECHAZADA"
   curso?: {
     titulo: string
     descripcion: string

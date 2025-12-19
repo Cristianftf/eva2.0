@@ -29,10 +29,19 @@ public class MultimediaController {
     @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
     public ResponseEntity<MultimediaItem> uploadMultimedia(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "subtitulos", required = false) MultipartFile subtitulos,
+            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail,
             @RequestParam("temaId") Long temaId) {
         try {
             String tipo = detectFileType(file.getContentType());
-            MultimediaItem multimedia = multimediaService.upload(file, temaId, tipo);
+            MultimediaItem multimedia;
+
+            if (subtitulos != null || thumbnail != null) {
+                multimedia = multimediaService.uploadWithExtras(file, subtitulos, thumbnail, temaId, tipo);
+            } else {
+                multimedia = multimediaService.upload(file, temaId, tipo);
+            }
+
             return ResponseEntity.ok(multimedia);
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();

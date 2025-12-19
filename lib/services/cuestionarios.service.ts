@@ -87,9 +87,9 @@ class CuestionariosService {
   async enviarRespuestasCompletas(
     cuestionarioId: number,
     respuestas: RespuestaEstudiante[],
-  ): Promise<{ calificacion: number; aprobado: boolean }> {
+  ): Promise<{ calificacion: number; aprobado: boolean; detallesRespuestas?: any[] }> {
     const payload: EnviarCuestionarioData = { respuestas }
-    const response = await apiService.post<{ calificacion: number; aprobado: boolean }>(
+    const response = await apiService.post<{ calificacion: number; aprobado: boolean; detallesRespuestas?: any[] }>(
       `${API_ENDPOINTS.quizzes.base}/${cuestionarioId}/responder`,
       payload,
     )

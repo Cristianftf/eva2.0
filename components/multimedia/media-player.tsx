@@ -15,6 +15,8 @@ interface MediaPlayerProps {
   nombreArchivo?: string
   autoplay?: boolean
   onComplete?: () => void
+  subtitulosUrl?: string
+  thumbnailUrl?: string
 }
 
 // Función para convertir URLs relativas a absolutas
@@ -26,7 +28,7 @@ const getAbsoluteUrl = (url: string) => {
   return url.startsWith('/') ? url : `/${url}`
 }
 
-export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false, onComplete }: MediaPlayerProps) {
+export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false, onComplete, subtitulosUrl, thumbnailUrl }: MediaPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -139,7 +141,20 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
             autoPlay={autoplay}
             onClick={togglePlay}
             controls={false} // Usamos nuestros controles personalizados
-          />
+            poster={thumbnailUrl ? getAbsoluteUrl(thumbnailUrl) : undefined}
+            aria-label={titulo || nombreArchivo || "Reproductor de video"}
+          >
+            {subtitulosUrl && (
+              <track
+                kind="subtitles"
+                src={getAbsoluteUrl(subtitulosUrl)}
+                srcLang="es"
+                label="Español"
+                default
+              />
+            )}
+            Tu navegador no soporta la reproducción de video.
+          </video>
         )
 
       case "audio":
@@ -228,19 +243,39 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => skip(-10)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => skip(-10)}
+                  aria-label="Retroceder 10 segundos"
+                >
                   <SkipBack className="h-4 w-4" />
                 </Button>
-                <Button variant="default" size="icon" onClick={togglePlay}>
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={togglePlay}
+                  aria-label={isPlaying ? "Pausar reproducción" : "Iniciar reproducción"}
+                >
                   {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => skip(10)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => skip(10)}
+                  aria-label="Avanzar 10 segundos"
+                >
                   <SkipForward className="h-4 w-4" />
                 </Button>
               </div>
 
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleMute}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                  aria-label={isMuted ? "Activar sonido" : "Silenciar"}
+                >
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </Button>
                 <Slider
@@ -249,9 +284,15 @@ export function MediaPlayer({ url, tipo, titulo, nombreArchivo, autoplay = false
                   step={0.01}
                   onValueChange={handleVolumeChange}
                   className="w-24 cursor-pointer"
+                  aria-label="Control de volumen"
                 />
                 {tipo === "video" && (
-                  <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleFullscreen}
+                    aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                  >
                     {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                   </Button>
                 )}

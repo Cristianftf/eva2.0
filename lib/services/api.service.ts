@@ -156,7 +156,7 @@ class ApiService {
   }
 
   // Método especial para subir archivos
-  async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string>): Promise<ApiResponse<T>> {
+  async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string | File>): Promise<ApiResponse<T>> {
     const token = this.getToken()
     const url = `${this.baseUrl}${endpoint}`
 
@@ -165,7 +165,11 @@ class ApiService {
 
     if (additionalData) {
       Object.entries(additionalData).forEach(([key, value]) => {
-        formData.append(key, value)
+        if (value instanceof File) {
+          formData.append(key, value)
+        } else {
+          formData.append(key, value)
+        }
       })
     }
 

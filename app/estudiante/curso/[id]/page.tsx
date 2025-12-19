@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/context/auth.context"
 import { coursesService } from "@/lib/services/courses.service"
 import { multimediaService } from "@/lib/services/multimedia.service"
 import { cuestionariosService } from "@/lib/services/cuestionarios.service"
-import { MediaPlayer } from "@/components/multimedia/media-player"
+import { MediaViewer } from "@/components/multimedia/media-viewer"
 import type { Tema, MultimediaItem, Cuestionario } from "@/lib/types"
 import { Play, FileText, Image, Video, Music, CheckCircle, Clock, BookOpen, X, Search } from "lucide-react"
 
@@ -351,7 +351,7 @@ export default function CursoDetallePage() {
                                 <p className="text-sm text-muted-foreground">{cuestionario.descripcion}</p>
                                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                   <span>📝 {cuestionario.preguntas?.length || 0} preguntas</span>
-                                  <span>⏱️ {cuestionario.duracionEstimada || 15} min</span>
+                                  <span>⏱️ {cuestionario.duracionMinutos || 15} min</span>
                                 </div>
                               </div>
                               <Button size="sm" className="ml-4" onClick={() => handleRealizarCuestionario(cuestionario)}>
@@ -499,13 +499,7 @@ export default function CursoDetallePage() {
                 </Button>
               </div>
               <div className="p-4">
-                <MediaPlayer
-                   url={selectedMultimedia.urlArchivo}
-                   tipo={selectedMultimedia.tipo.toLowerCase() as "video" | "audio" | "imagen" | "documento"}
-                   titulo={selectedMultimedia.nombreArchivo}
-                   nombreArchivo={selectedMultimedia.nombreArchivo}
-                   onComplete={handleMultimediaComplete}
-                 />
+                <MediaViewer media={selectedMultimedia} />
               </div>
             </div>
           </div>

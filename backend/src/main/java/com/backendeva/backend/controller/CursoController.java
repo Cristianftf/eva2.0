@@ -73,6 +73,15 @@ public class CursoController {
             curso.setMetadataLom(createCursoDto.getMetadataLom());
             curso.setProfesor(profesor);
 
+            // Nuevos campos para cursos enriquecidos
+            curso.setPrerrequisitos(createCursoDto.getPrerrequisitos());
+            curso.setResultadosAprendizaje(createCursoDto.getResultadosAprendizaje());
+            curso.setHabilidades(createCursoDto.getHabilidades());
+            curso.setIdioma(createCursoDto.getIdioma());
+            curso.setPrecio(createCursoDto.getPrecio());
+            curso.setImagenPortada(createCursoDto.getImagenPortada());
+            curso.setEtiquetas(createCursoDto.getEtiquetas());
+
             Curso savedCurso = cursoService.save(curso);
             return ResponseEntity.ok(savedCurso);
         } catch (Exception e) {

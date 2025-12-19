@@ -29,8 +29,13 @@ public enum TipoPregunta {
     /**
      * Pregunta de ordenar elementos - el estudiante ordena una lista de elementos
      */
-    ORDENAR_ELEMENTOS("ordenar_elementos", "Ordenar Elementos");
-    
+    ORDENAR_ELEMENTOS("ordenar_elementos", "Ordenar Elementos"),
+
+    /**
+     * Pregunta de respuesta corta - el estudiante escribe una respuesta breve
+     */
+    RESPUESTA_CORTA("respuesta_corta", "Respuesta Corta");
+
     private final String codigo;
     private final String descripcion;
     
@@ -93,6 +98,7 @@ public enum TipoPregunta {
             case OPCION_MULTIPLE:
                 return 10; // Arbitrario, configurable
             case COMPLETAR_TEXTO:
+            case RESPUESTA_CORTA:
                 return 1;
             case ARRASTRAR_SOLTAR:
             case ORDENAR_ELEMENTOS:

@@ -62,6 +62,7 @@ public class Pregunta {
             case VERDADERO_FALSO:
                 return respuestas != null && respuestas.size() >= 2;
             case COMPLETAR_TEXTO:
+            case RESPUESTA_CORTA:
                 return true; // Las preguntas de texto pueden tener 0 o más respuestas de referencia
             case ARRASTRAR_SOLTAR:
             case ORDENAR_ELEMENTOS:

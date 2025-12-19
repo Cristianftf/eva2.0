@@ -19,11 +19,15 @@ class MultimediaService {
   }
 
   // Subir archivo multimedia
-  async upload(file: File, temaId: string, tipo?: string): Promise<ApiResponse<MultimediaItem>> {
-    return apiService.uploadFile<MultimediaItem>(API_ENDPOINTS.multimedia.upload, file, {
+  async upload(file: File, temaId: string, tipo?: string, subtitulos?: File, thumbnail?: File): Promise<ApiResponse<MultimediaItem>> {
+    const additionalData: Record<string, string | File> = {
       temaId,
       ...(tipo && { tipo }),
-    })
+      ...(subtitulos && { subtitulos }),
+      ...(thumbnail && { thumbnail }),
+    }
+
+    return apiService.uploadFile<MultimediaItem>(API_ENDPOINTS.multimedia.upload, file, additionalData)
   }
 
   // Eliminar multimedia

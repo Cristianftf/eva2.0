@@ -25,6 +25,23 @@ public class Curso {
     private boolean activo;
     private LocalDate fechaCreacion;
 
+    // Nuevos campos para cursos más ricos
+    @Column(columnDefinition = "TEXT")
+    private String prerrequisitos;
+
+    @Column(columnDefinition = "TEXT")
+    private String resultadosAprendizaje;
+
+    @Column(columnDefinition = "TEXT")
+    private String habilidades;
+
+    private String idioma;
+    private Double precio;
+    private String imagenPortada;
+
+    @Column(columnDefinition = "TEXT")
+    private String etiquetas; // separados por comas
+
     @Column(columnDefinition = "TEXT")
     private String metadataLom; // JSON string con metadata LOM
 
