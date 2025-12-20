@@ -8,7 +8,10 @@ import com.backendeva.backend.services.TemaService;
 import com.backendeva.backend.services.CursoService;
 import com.backendeva.backend.services.InscripcionService;
 import com.backendeva.backend.services.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,21 +25,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cursos")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
+@Slf4j
 public class CursoController {
 
-    @Autowired
-    private CursoService cursoService;
-
-    @Autowired
-    private InscripcionService inscripcionService;
-
-    @Autowired
-    private UsuarioService usuarioService;
-
-    @Autowired
-    private TemaService temaService;
+    private final CursoService cursoService;
+    private final InscripcionService inscripcionService;
+    private final UsuarioService usuarioService;
+    private final TemaService temaService;
 
     @GetMapping
+    @Cacheable(value = "courses", key = "'all_' + #page + '_' + #pageSize")
     public PaginatedResponseDto<Curso> getAllCursos(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
@@ -46,6 +45,7 @@ public class CursoController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "courses", key = "'single_' + #id")
     public ResponseEntity<Curso> getCursoById(@PathVariable Long id) {
         return cursoService.findById(id)
                 .map(ResponseEntity::ok)
@@ -54,6 +54,7 @@ public class CursoController {
 
     @PostMapping
     @PreAuthorize("hasRole('PROFESOR')")
+    @CacheEvict(value = "courses", allEntries = true)
     public ResponseEntity<Curso> createCurso(@RequestBody CreateCursoDto createCursoDto) {
         try {
             // Buscar el profesor por ID
@@ -91,12 +92,14 @@ public class CursoController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('PROFESOR')")
+    @CacheEvict(value = "courses", allEntries = true)
     public ResponseEntity<Curso> updateCurso(@PathVariable Long id, @RequestBody Curso cursoDetails) {
         return ResponseEntity.ok(cursoService.update(id, cursoDetails));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PROFESOR')")
+    @CacheEvict(value = "courses", allEntries = true)
     public ResponseEntity<Void> deleteCurso(@PathVariable Long id) {
         cursoService.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -104,6 +107,7 @@ public class CursoController {
 
     @GetMapping("/profesor/{idProfesor}")
     @PreAuthorize("hasRole('PROFESOR') or hasRole('ADMIN')")
+    @Cacheable(value = "courses", key = "'profesor_' + #idProfesor")
     public List<Curso> getCursosByProfesor(@PathVariable Long idProfesor) {
         return cursoService.getByProfesor(idProfesor);
     }

@@ -13,7 +13,15 @@ const nextConfig = {
   // Configuración experimental actualizada para Next.js 16
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dropdown-menu'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
 
   // Configuración de Turbopack para evitar conflictos con webpack
@@ -132,9 +140,9 @@ const nextConfig = {
   // Powered by header personalizado
   poweredByHeader: false,
   
-  // Generar sitemap automรกticamente
+  // Generar build ID para salud
   async generateBuildId() {
-    return 'edusearch-build-' + Date.now()
+    return 'healthconnect-build-' + Date.now()
   },
 }
 

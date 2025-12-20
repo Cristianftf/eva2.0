@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     me: "/auth/me",
     changePassword: "/auth/cambiar-password",
     uploadPhoto: "/auth/subir-foto",
+    health: "/auth/health",
   },
 
   // Usuarios

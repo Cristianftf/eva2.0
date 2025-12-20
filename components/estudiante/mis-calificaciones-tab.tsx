@@ -1,83 +1,51 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/lib/context/auth.context"
-import { cuestionariosService } from "@/lib/services/cuestionarios.service"
+import { useStudentData } from "@/hooks/use-student-data"
+import { LoadingState, ErrorState, EmptyState } from "@/components/ui/data-states"
 import { Award, TrendingUp, CheckCircle2 } from "lucide-react"
 
-interface Calificacion {
-  id: string
-  curso: string
-  cuestionario: string
-  calificacion: number
-  fecha: string
-  estado: string
-}
-
 export function MisCalificacionesTab() {
-  const { user } = useAuth()
-  const [calificaciones, setCalificaciones] = useState<Calificacion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { resultadosCuestionarios, loading, error, refetchResultados } = useStudentData()
 
-  useEffect(() => {
-    if (user) {
-      loadCalificaciones()
+  // Formatear calificaciones usando useMemo
+  const calificaciones = useMemo(() => {
+    if (!resultadosCuestionarios) return []
+
+    return resultadosCuestionarios.map((item: any) => ({
+      id: item.id.toString(),
+      curso: item.curso,
+      cuestionario: item.cuestionario,
+      calificacion: Math.round(item.calificacion),
+      fecha: item.fecha,
+      estado: item.estado,
+    }))
+  }, [resultadosCuestionarios])
+
+  // Calcular estadísticas usando useMemo
+  const estadisticas = useMemo(() => {
+    if (!calificaciones.length) return { promedio: 0, aprobadas: 0, total: 0 }
+
+    const promedio = Math.round(calificaciones.reduce((acc, c) => acc + c.calificacion, 0) / calificaciones.length)
+    const aprobadas = calificaciones.filter(c => c.estado === "aprobado").length
+
+    return {
+      promedio,
+      aprobadas,
+      total: calificaciones.length
     }
-  }, [user])
-
-  const loadCalificaciones = async () => {
-    if (!user) return
-
-    setLoading(true)
-    setError(null)
-
-    const result = await cuestionariosService.getResultadosByEstudiante(user.id)
-
-    if (result.success && result.data) {
-      const formatted = result.data.map((item: any) => ({
-        id: item.id.toString(),
-        curso: item.curso,
-        cuestionario: item.cuestionario,
-        calificacion: Math.round(item.calificacion),
-        fecha: item.fecha,
-        estado: item.estado,
-      }))
-      setCalificaciones(formatted)
-    } else {
-      setError(result.error || "Error al cargar calificaciones")
-    }
-
-    setLoading(false)
-  }
+  }, [calificaciones])
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
-        </div>
-      </div>
-    )
+    return <LoadingState message="Cargando calificaciones..." />
   }
 
   if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
+    return <ErrorState error={error} onRetry={refetchResultados} />
   }
-
-  const promedioGeneral = calificaciones.length > 0 ? Math.round(calificaciones.reduce((acc, c) => acc + c.calificacion, 0) / calificaciones.length) : 0
 
   return (
     <div className="space-y-6">
@@ -95,7 +63,7 @@ export function MisCalificacionesTab() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Promedio General</p>
-                <p className="text-2xl font-bold">{promedioGeneral}</p>
+                <p className="text-2xl font-bold">{estadisticas.promedio}</p>
               </div>
             </div>
 
@@ -105,7 +73,7 @@ export function MisCalificacionesTab() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Evaluaciones Aprobadas</p>
-                <p className="text-2xl font-bold">{calificaciones.filter(c => c.estado === "aprobado").length}</p>
+                <p className="text-2xl font-bold">{estadisticas.aprobadas}</p>
               </div>
             </div>
 
@@ -115,7 +83,7 @@ export function MisCalificacionesTab() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Evaluaciones</p>
-                <p className="text-2xl font-bold">{calificaciones.length}</p>
+                <p className="text-2xl font-bold">{estadisticas.total}</p>
               </div>
             </div>
           </div>
@@ -124,15 +92,11 @@ export function MisCalificacionesTab() {
 
       {/* Grades List */}
       {calificaciones.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Award className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No tienes calificaciones aún</h3>
-            <p className="text-muted-foreground text-center">
-              Completa cuestionarios en tus cursos para ver tus calificaciones aquí
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Award}
+          title="No tienes calificaciones aún"
+          description="Completa cuestionarios en tus cursos para ver tus calificaciones aquí"
+        />
       ) : (
         <Card>
           <CardHeader>

@@ -158,7 +158,16 @@ export interface RecursoConfiable {
   url: string
   categoria: string
   imagen?: string
-  fechaAgregado: string
+  fechaAgregado?: string
+  // Campos adicionales para salud
+  contenido?: string
+  especialidad?: string
+  urgencia?: 'baja' | 'media' | 'alta'
+  tipo?: 'prevencion' | 'diagnostico' | 'tratamiento' | 'seguimiento'
+  fuente?: string
+  fechaCreacion?: Date
+  verificado?: boolean
+  tags?: string[]
 }
 
 export interface InformeEstudiante {

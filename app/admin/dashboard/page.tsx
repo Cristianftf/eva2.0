@@ -1,83 +1,70 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProtectedRoute } from "@/components/layout/protected-route"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/lib/context/auth.context"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { StatsCard } from "@/components/ui/stats-card"
+import { LoadingState } from "@/components/ui/data-states"
 import { Users, BookOpen, FileText, TrendingUp } from "lucide-react"
 import { UsuariosTab } from "@/components/admin/usuarios-tab"
 import { CursosTab } from "@/components/admin/cursos-tab"
 import { RecursosTab } from "@/components/admin/recursos-tab"
 import { EstadisticasTab } from "@/components/admin/estadisticas-tab"
-import { useAuth } from "@/lib/context/auth.context"
-import { usuariosService } from "@/lib/services/usuarios.service"
-import { coursesService } from "@/lib/services/courses.service"
-import { recursosService } from "@/lib/services/recursos.service"
-import { estadisticasService } from "@/lib/services/estadisticas.service"
+import { useMemo } from "react"
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
-  const [stats, setStats] = useState({
-    totalUsuarios: 0,
-    totalCursos: 0,
-    totalRecursos: 0,
-    usuariosActivos: 0,
-    actividadMensual: 0,
-  })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    usuarios,
+    cursos,
+    recursos,
+    estadisticasGlobales,
+    loading: dataLoading
+  } = useAdminData()
 
-  useEffect(() => {
-    loadStats()
-  }, [])
+  // Calcular estadísticas usando useMemo para optimización
+  const stats = useMemo(() => {
+    if (!usuarios || !cursos || !recursos) return null
 
-  const loadStats = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const [usuariosResult, cursosResult, recursosResult, statsResult] = await Promise.all([
-        usuariosService.getAll(),
-        coursesService.getAllCourses(),
-        recursosService.getAll(),
-        estadisticasService.getGenerales(),
-      ])
-
-      if (usuariosResult.success && usuariosResult.data) {
-        setStats((prev) => ({
-          ...prev,
-          totalUsuarios: usuariosResult.data.length,
-          usuariosActivos: usuariosResult.data.filter((u) => u.activo).length,
-        }))
-      }
-
-      if (cursosResult.success && cursosResult.data) {
-        setStats((prev) => ({
-          ...prev,
-          totalCursos: cursosResult.data.length,
-        }))
-      }
-
-      if (recursosResult.success && recursosResult.data) {
-        setStats((prev) => ({
-          ...prev,
-          totalRecursos: recursosResult.data.length,
-        }))
-      }
-
-      if (statsResult.success && statsResult.data) {
-        setStats((prev) => ({
-          ...prev,
-          actividadMensual: statsResult.data.actividadMensual,
-        }))
-      }
-    } catch (err) {
-      setError("Error al cargar estadísticas")
+    return {
+      totalUsuarios: usuarios.length,
+      totalCursos: cursos.length,
+      totalRecursos: recursos.length,
+      usuariosActivos: usuarios.filter((u) => u.activo).length,
+      actividadMensual: estadisticasGlobales?.actividadMensual || 0,
     }
+  }, [usuarios, cursos, recursos, estadisticasGlobales])
 
-    setLoading(false)
+  // Mostrar loading mientras se carga la información del usuario
+  if (dataLoading) {
+    return (
+      <ProtectedRoute allowedRoles={["ADMIN"]}>
+        <DashboardLayout>
+          <div className="space-y-8">
+            <LoadingState message="Cargando panel administrativo..." />
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  // Verificar que user existe antes de mostrar el contenido
+  if (!user) {
+    return (
+      <ProtectedRoute allowedRoles={["ADMIN"]}>
+        <DashboardLayout>
+          <div className="space-y-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-muted-foreground">No se pudo cargar la información del usuario</p>
+              </div>
+            </div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
   }
 
   return (
@@ -92,73 +79,37 @@ export default function AdminDashboardPage() {
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{stats.totalUsuarios}</div>
-                  <p className="text-xs text-muted-foreground">{stats.usuariosActivos} activos</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Total Usuarios"
+            value={stats?.totalUsuarios || 0}
+            description={`${stats?.usuariosActivos || 0} activos`}
+            icon={Users}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cursos</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{stats.totalCursos}</div>
-                  <p className="text-xs text-muted-foreground">Cursos publicados</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Total Cursos"
+            value={stats?.totalCursos || 0}
+            description="Cursos publicados"
+            icon={BookOpen}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recursos</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{stats.totalRecursos}</div>
-                  <p className="text-xs text-muted-foreground">Recursos confiables</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Recursos"
+            value={stats?.totalRecursos || 0}
+            description="Recursos confiables"
+            icon={FileText}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Actividad</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">+{stats.actividadMensual || 0}%</div>
-                  <p className="text-xs text-muted-foreground">vs. mes anterior</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Actividad"
+            value={`+${stats?.actividadMensual || 0}%`}
+            description="vs. mes anterior"
+            icon={TrendingUp}
+            loading={dataLoading}
+          />
         </div>
 
         {/* Management Tabs */}

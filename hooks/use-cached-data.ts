@@ -104,6 +104,45 @@ export function useCachedRecursosByCategoria(categoria: string) {
   })
 }
 
+// Hook para búsqueda de información de salud
+export function useHealthSearch(query: string, options?: {
+  sources?: ('pubmed' | 'who' | 'cdc' | 'local')[]
+  limit?: number
+  enabled?: boolean
+}) {
+  return useQuery({
+    queryKey: ["health", "search", query, options],
+    queryFn: () => recursosService.searchHealthInfo(query, options),
+    enabled: !!query && (options?.enabled ?? true),
+    staleTime: 30 * 60 * 1000, // 30 minutos para búsquedas de salud
+    retry: 1, // Solo 1 retry para búsquedas externas
+  })
+}
+
+// Hook para recursos de emergencia
+export function useEmergencyResources() {
+  return useQuery({
+    queryKey: ["health", "emergency"],
+    queryFn: () => Promise.resolve({
+      success: true,
+      data: recursosService.getEmergencyResources()
+    }),
+    staleTime: 60 * 60 * 1000, // 1 hora
+  })
+}
+
+// Hook para biblioteca local de salud
+export function useLocalHealthLibrary() {
+  return useQuery({
+    queryKey: ["health", "local"],
+    queryFn: () => Promise.resolve({
+      success: true,
+      data: recursosService.getLocalLibrary()
+    }),
+    staleTime: 24 * 60 * 60 * 1000, // 24 horas
+  })
+}
+
 // ============================================
 // HOOKS PARA ESTADÍSTICAS
 // ============================================

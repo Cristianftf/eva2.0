@@ -5,15 +5,34 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutos
-      cacheTime: 10 * 60 * 1000, // 10 minutos (antes era gcTime)
-      retry: 2,
-      retryDelay: 1000,
+     
+      retry: (failureCount, error: any) => {
+        // No retry en errores de autenticación
+        if (error?.message?.includes('401') || error?.message?.includes('403')) {
+          return false
+        }
+        // No retry en errores del servidor
+        if (error?.message?.includes('500')) {
+          return false
+        }
+        // Retry hasta 3 veces para otros errores
+        return failureCount < 3
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       refetchOnWindowFocus: false,
       refetchOnMount: true,
       refetchOnReconnect: true,
+      networkMode: 'online', // Solo hacer requests cuando hay conexión
     },
     mutations: {
-      retry: 1,
+      retry: (failureCount, error: any) => {
+        // No retry en errores de validación
+        if (error?.message?.includes('400')) {
+          return false
+        }
+        return failureCount < 1
+      },
+      networkMode: 'online',
     },
   },
 })

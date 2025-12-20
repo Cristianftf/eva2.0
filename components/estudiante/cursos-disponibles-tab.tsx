@@ -1,66 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/lib/context/auth.context"
-import { coursesService } from "@/lib/services/courses.service"
-import type { Curso } from "@/lib/types"
+import { useStudentData } from "@/hooks/use-student-data"
+import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
+import { LoadingState, ErrorState, EmptyState, SkeletonGrid } from "@/components/ui/data-states"
 import { Search, BookOpen, Clock, Users } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 export function CursosDisponiblesTab() {
-  const { user } = useAuth()
   const router = useRouter()
-  const [cursos, setCursos] = useState<Curso[]>([])
-  const [filteredCursos, setFilteredCursos] = useState<Curso[]>([])
-  const [solicitudes, setSolicitudes] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { cursosDisponibles, cursosInscritos, loading, error, solicitarInscripcion, refetchCursosDisponibles } = useStudentData()
+  const { confirm } = useConfirmationDialog()
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [inscribiendo, setInscribiendo] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadCursos()
-  }, [])
+  // Filtrar cursos usando useMemo para optimización
+  const filteredCursos = useMemo(() => {
+    if (!cursosDisponibles) return []
 
-  useEffect(() => {
-    filterCursos()
-  }, [searchTerm, cursos])
-
-  const loadCursos = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const cursosResult = await coursesService.getAllCourses()
-
-      if (cursosResult.success && cursosResult.data) {
-        setCursos(cursosResult.data.filter((c) => c.activo))
-      } else {
-        setError(cursosResult.error || "Error al cargar cursos")
-      }
-
-      // Cargar solicitudes del estudiante si está logueado
-      if (user) {
-        const solicitudesResult = await coursesService.getInscripcionesByEstudiante(user.id)
-        if (solicitudesResult.success && solicitudesResult.data) {
-          setSolicitudes(solicitudesResult.data)
-        }
-      }
-    } catch (err) {
-      setError("Error al cargar datos")
-    }
-
-    setLoading(false)
-  }
-
-  const filterCursos = () => {
-    let filtered = cursos
+    let filtered = cursosDisponibles
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -70,29 +34,42 @@ export function CursosDisponiblesTab() {
       )
     }
 
-    setFilteredCursos(filtered)
-  }
+    return filtered
+  }, [cursosDisponibles, searchTerm])
 
   const handleSolicitarInscripcion = async (cursoId: string) => {
-    if (!user) return
+    const confirmed = await confirm("¿Estás seguro de que quieres solicitar la inscripción a este curso?")
+    if (!confirmed) return
 
     setInscribiendo(cursoId)
 
-    const result = await coursesService.solicitarInscripcion(cursoId, user.id)
-
-    if (result.success) {
-      alert("Solicitud de inscripción enviada. Espera la aprobación del profesor.")
-      // Recargar cursos para actualizar estado
-      loadCursos()
-    } else {
-      alert(result.error || "Error al enviar solicitud de inscripción")
+    try {
+      const result = await solicitarInscripcion(cursoId)
+      if (result.success) {
+        toast({
+          title: "Solicitud enviada",
+          description: "Tu solicitud de inscripción ha sido enviada. Espera la aprobación del profesor.",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al enviar la solicitud de inscripción",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo enviar la solicitud. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
     }
 
     setInscribiendo(null)
   }
 
   const getEstadoSolicitud = (cursoId: string) => {
-    const solicitud = solicitudes.find(s => s.cursoId === cursoId)
+    const solicitud = cursosInscritos?.find(s => s.cursoId === cursoId)
     return solicitud?.estado || null
   }
 
@@ -114,11 +91,11 @@ export function CursosDisponiblesTab() {
     }
   }
 
-  const getButtonText = (estado: string | null, inscribiendo: boolean, progreso: number = 0) => {
+  const getButtonText = (estado: string | null, inscribiendo: boolean) => {
     if (inscribiendo) return 'Enviando...'
     switch (estado) {
       case 'PENDIENTE': return 'Solicitud Enviada'
-      case 'APROBADA': return progreso > 0 ? 'Continuar Curso' : 'Empezar Curso'
+      case 'APROBADA': return 'Ir al Curso'
       case 'RECHAZADA': return 'Solicitar de Nuevo'
       default: return 'Solicitar Inscripción'
     }
@@ -131,14 +108,13 @@ export function CursosDisponiblesTab() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-full" />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-64" />
-          ))}
-        </div>
+        <LoadingState message="Cargando cursos disponibles..." />
       </div>
     )
+  }
+
+  if (error) {
+    return <ErrorState error={error} onRetry={refetchCursosDisponibles} />
   }
 
   return (
@@ -154,21 +130,13 @@ export function CursosDisponiblesTab() {
         />
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Courses Grid */}
       {filteredCursos.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No se encontraron cursos</h3>
-            <p className="text-muted-foreground">Intenta con otros términos de búsqueda</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={BookOpen}
+          title="No se encontraron cursos"
+          description={searchTerm ? "Intenta con otros términos de búsqueda" : "No hay cursos disponibles en este momento"}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCursos.map((curso) => {
@@ -212,7 +180,7 @@ export function CursosDisponiblesTab() {
                     onClick={() => estadoSolicitud === 'APROBADA' ? router.push(`/estudiante/curso/${curso.id}`) : handleSolicitarInscripcion(curso.id)}
                     disabled={inscribiendo === curso.id || !canSolicitar(estadoSolicitud)}
                   >
-                    {getButtonText(estadoSolicitud, inscribiendo === curso.id, estadoSolicitud === 'APROBADA' ? (solicitudes.find(s => s.cursoId === parseInt(curso.id))?.progreso || 0) : 0)}
+                    {getButtonText(estadoSolicitud, inscribiendo === curso.id)}
                   </Button>
                 </CardContent>
               </Card>

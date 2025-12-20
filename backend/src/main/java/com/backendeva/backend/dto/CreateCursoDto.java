@@ -1,5 +1,7 @@
 package com.backendeva.backend.dto;
 
+import java.math.BigDecimal;
+
 public class CreateCursoDto {
     private String titulo;
     private String descripcion;
@@ -16,7 +18,7 @@ public class CreateCursoDto {
     private String resultadosAprendizaje;
     private String habilidades;
     private String idioma;
-    private Double precio;
+    private BigDecimal precio;
     private String imagenPortada;
     private String etiquetas;
 
@@ -140,11 +142,11 @@ public class CreateCursoDto {
         this.idioma = idioma;
     }
 
-    public Double getPrecio() {
+    public BigDecimal getPrecio() {
         return precio;
     }
 
-    public void setPrecio(Double precio) {
+    public void setPrecio(BigDecimal precio) {
         this.precio = precio;
     }
 
