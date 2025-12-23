@@ -61,6 +61,7 @@ public class Curso {
     private String categoria;
 
     @Column(name = "activo", nullable = false)
+    @Builder.Default
     private boolean activo = true;
 
     @Column(name = "fecha_creacion", nullable = false)

@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class CursoController {
             curso.setResultadosAprendizaje(createCursoDto.getResultadosAprendizaje());
             curso.setHabilidades(createCursoDto.getHabilidades());
             curso.setIdioma(createCursoDto.getIdioma());
-            curso.setPrecio(createCursoDto.getPrecio());
+            curso.setPrecio(createCursoDto.getPrecio() != null ? createCursoDto.getPrecio() : BigDecimal.ZERO);
             curso.setImagenPortada(createCursoDto.getImagenPortada());
             curso.setEtiquetas(createCursoDto.getEtiquetas());
 
@@ -157,6 +158,13 @@ public class CursoController {
     public ResponseEntity<List<InscripcionDto>> getInscripcionesByEstudiante(@PathVariable Long estudianteId) {
         List<InscripcionDto> inscripciones = inscripcionService.findByEstudianteIdAsDto(estudianteId);
         return ResponseEntity.ok(inscripciones);
+    }
+
+    @GetMapping("/disponibles/estudiante/{estudianteId}")
+    @PreAuthorize("hasRole('ESTUDIANTE') or hasRole('ADMIN')")
+    public ResponseEntity<List<Curso>> getCursosDisponiblesByEstudiante(@PathVariable Long estudianteId) {
+        List<Curso> cursosDisponibles = cursoService.findCursosDisponiblesByEstudiante(estudianteId);
+        return ResponseEntity.ok(cursosDisponibles);
     }
 
     @GetMapping("/{cursoId}/progreso/estudiante/{estudianteId}")

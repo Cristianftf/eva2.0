@@ -19,7 +19,7 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     // Consultas básicas optimizadas
     @QueryHints(value = {
         @QueryHint(name = "org.hibernate.cacheable", value = "true"),
-        @QueryHint(name = "org.hibernate.cacheRegion", value = "cursos")
+        @QueryHint(name = "org.hibernate.cacheRegion", value = "courses")
     })
     List<Curso> findByProfesorId(@Param("idProfesor") Long idProfesor);
 
@@ -36,7 +36,7 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     // Consultas con paginación
     @QueryHints(value = {
         @QueryHint(name = "org.hibernate.cacheable", value = "true"),
-        @QueryHint(name = "org.hibernate.cacheRegion", value = "cursos")
+        @QueryHint(name = "org.hibernate.cacheRegion", value = "courses")
     })
     Page<Curso> findByProfesorId(@Param("idProfesor") Long idProfesor, Pageable pageable);
 
@@ -96,4 +96,8 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     @Query("SELECT AVG(c.precio) FROM Curso c WHERE c.activo = true AND c.precio IS NOT NULL")
     Double avgPrecioCursosActivos();
+
+    @Query("SELECT c FROM Curso c WHERE c.activo = true AND c.id NOT IN " +
+           "(SELECT i.curso.id FROM Inscripcion i WHERE i.estudiante.id = :estudianteId)")
+    List<Curso> findCursosDisponiblesByEstudianteId(@Param("estudianteId") Long estudianteId);
 }

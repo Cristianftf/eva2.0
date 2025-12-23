@@ -1,5 +1,6 @@
 package com.backendeva.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
     @Index(name = "idx_user_last_seen", columnList = "last_seen")
 })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -58,6 +60,7 @@ public class User {
     private String rol;
 
     @Column(name = "activo", nullable = false)
+    @Builder.Default
     private boolean activo = true;
 
     @Column(name = "fecha_registro", nullable = false)

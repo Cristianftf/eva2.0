@@ -1,6 +1,7 @@
 package com.backendeva.backend.controller;
 
 import com.backendeva.backend.dto.EnviarCuestionarioDto;
+import com.backendeva.backend.dto.ResultadoCuestionarioDto;
 import com.backendeva.backend.model.Cuestionario;
 import com.backendeva.backend.services.CuestionarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,8 +66,8 @@ public class CuestionarioController {
 
     @GetMapping("/resultados/estudiante/{estudianteId}")
     @PreAuthorize("hasRole('ESTUDIANTE') or hasRole('ADMIN')")
-    public ResponseEntity<List<Map<String, Object>>> getResultadosByEstudiante(@PathVariable Long estudianteId) {
-        List<Map<String, Object>> resultados = cuestionarioService.getResultadosByEstudiante(estudianteId);
+    public ResponseEntity<List<ResultadoCuestionarioDto>> getResultadosByEstudiante(@PathVariable Long estudianteId) {
+        List<ResultadoCuestionarioDto> resultados = cuestionarioService.getResultadosByEstudiante(estudianteId);
         return ResponseEntity.ok(resultados);
     }
 

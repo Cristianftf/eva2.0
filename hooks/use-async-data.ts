@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ApiResponse } from '@/lib/types'
 
 interface UseAsyncDataOptions<T> {
@@ -36,35 +36,43 @@ export function useAsyncData<T>(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const execute = useCallback(async () => {
-    if (!enabled) return
+  const asyncFnRef = useRef(asyncFn)
+  const onSuccessRef = useRef(onSuccess)
+  const onErrorRef = useRef(onError)
 
+  asyncFnRef.current = asyncFn
+  onSuccessRef.current = onSuccess
+  onErrorRef.current = onError
+
+  const execute = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const result = await asyncFn()
+      const result = await asyncFnRef.current()
 
       if (result.success && result.data) {
         setData(result.data)
-        onSuccess?.(result.data)
+        onSuccessRef.current?.(result.data)
       } else {
         const errorMsg = result.error || 'Error desconocido'
         setError(errorMsg)
-        onError?.(errorMsg)
+        onErrorRef.current?.(errorMsg)
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error de conexión'
       setError(errorMsg)
-      onError?.(errorMsg)
+      onErrorRef.current?.(errorMsg)
     } finally {
       setLoading(false)
     }
-  }, [asyncFn, enabled, onSuccess, onError])
+  }, [])
 
   useEffect(() => {
-    execute()
-  }, [execute, ...dependencies])
+    if (enabled) {
+      execute()
+    }
+  }, [execute, enabled, ...dependencies])
 
   return {
     data,

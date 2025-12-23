@@ -1,7 +1,6 @@
 package com.backendeva.backend.services;
 
 import com.backendeva.backend.model.Curso;
-import com.backendeva.backend.model.User;
 import com.backendeva.backend.repository.CursoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,26 +26,26 @@ public class CursoService {
 
     private final CursoRepository cursoRepository;
 
-    @Cacheable(value = "cursos", key = "'all'")
+    @Cacheable(value = "courses", key = "'all'")
     public List<Curso> findAll() {
         log.debug("Obteniendo todos los cursos");
         return cursoRepository.findAll();
     }
 
-    @Cacheable(value = "cursos", key = "'page_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Cacheable(value = "courses", key = "'page_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<Curso> findAll(@NotNull Pageable pageable) {
         log.debug("Obteniendo cursos paginados: {}", pageable);
         return cursoRepository.findAll(pageable);
     }
 
-    @Cacheable(value = "cursos", key = "'single_' + #id")
+    @Cacheable(value = "courses", key = "'single_' + #id")
     public Optional<Curso> findById(@NotNull Long id) {
         log.debug("Buscando curso por ID: {}", id);
         return cursoRepository.findById(id);
     }
 
     @Transactional
-    @CacheEvict(value = "cursos", allEntries = true)
+    @CacheEvict(value = "courses", allEntries = true)
     public Curso save(@Valid @NotNull Curso curso) {
         log.debug("Guardando curso: {}", curso.getTitulo());
 
@@ -56,7 +56,7 @@ public class CursoService {
     }
 
     @Transactional
-    @CacheEvict(value = "cursos", allEntries = true)
+    @CacheEvict(value = "courses", allEntries = true)
     public void deleteById(@NotNull Long id) {
         log.debug("Eliminando curso por ID: {}", id);
 
@@ -68,7 +68,7 @@ public class CursoService {
     }
 
     @Transactional
-    @CacheEvict(value = {"cursos", "users"}, allEntries = true)
+    @CacheEvict(value = {"courses", "users"}, allEntries = true)
     public Curso update(@NotNull Long id, @Valid @NotNull Curso cursoDetails) {
         log.debug("Actualizando curso ID: {}", id);
 
@@ -84,19 +84,25 @@ public class CursoService {
         return cursoRepository.save(curso);
     }
 
-    @Cacheable(value = "cursos", key = "'profesor_' + #idProfesor")
+    @Cacheable(value = "courses", key = "'profesor_' + #idProfesor")
     public List<Curso> getByProfesor(@NotNull Long idProfesor) {
         log.debug("Obteniendo cursos por profesor ID: {}", idProfesor);
         return cursoRepository.findByProfesorId(idProfesor);
     }
 
-    @Cacheable(value = "cursos", key = "'activos_' + #activo")
+    @Cacheable(value = "courses", key = "'activos_' + #activo")
     public List<Curso> findByActivo(boolean activo) {
         log.debug("Obteniendo cursos por estado activo: {}", activo);
         return cursoRepository.findByActivo(activo);
     }
 
-    @Cacheable(value = "cursos", key = "'categoria_' + #categoria")
+    @Cacheable(value = "courses", key = "'disponibles_estudiante_' + #estudianteId")
+    public List<Curso> findCursosDisponiblesByEstudiante(Long estudianteId) {
+        log.debug("Obteniendo cursos disponibles para estudiante ID: {}", estudianteId);
+        return cursoRepository.findCursosDisponiblesByEstudianteId(estudianteId);
+    }
+
+    @Cacheable(value = "courses", key = "'categoria_' + #categoria")
     public List<Curso> findByCategoria(String categoria) {
         log.debug("Obteniendo cursos por categoría: {}", categoria);
         return cursoRepository.findByCategoria(categoria);
@@ -116,7 +122,7 @@ public class CursoService {
             throw new IllegalArgumentException("La duración estimada debe ser mayor a 0");
         }
 
-        if (curso.getPrecio() != null && curso.getPrecio() < 0) {
+        if (curso.getPrecio() != null && curso.getPrecio().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("El precio no puede ser negativo");
         }
     }

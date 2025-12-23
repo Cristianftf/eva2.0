@@ -4,7 +4,7 @@ import { coursesService } from '@/lib/services/courses.service'
 import { cuestionariosService } from '@/lib/services/cuestionarios.service'
 import { estadisticasService } from '@/lib/services/estadisticas.service'
 import { useAsyncData } from './use-async-data'
-import type { Curso, Inscripcion } from '@/lib/types'
+import type { Curso, Inscripcion, ResultadoCuestionario } from '@/lib/types'
 
 /**
  * Hook personalizado para operaciones de datos del estudiante
@@ -25,40 +25,15 @@ export function useStudentData() {
   )
 
   // Cursos disponibles para inscripción
-  const {
-    data: cursosDisponibles,
-    loading: loadingCursosDisponibles,
-    error: errorCursosDisponibles,
-    refetch: refetchCursosDisponibles
-  } = useAsyncData(
-    async () => {
-      if (!user) return { success: false, error: 'Usuario no disponible' }
-
-      try {
-        // Obtener todos los cursos
-        const allCoursesResult = await coursesService.getAllCourses()
-        if (!allCoursesResult.success || !allCoursesResult.data) {
-          return { success: false, error: 'No se pudieron cargar los cursos' }
-        }
-
-        // Obtener cursos inscritos para filtrar
-        const enrolledResult = await coursesService.getInscripcionesByEstudiante(user.id)
-        const enrolledCourseIds = enrolledResult.success && enrolledResult.data
-          ? enrolledResult.data.map(i => i.cursoId)
-          : []
-
-        // Filtrar cursos no inscritos y activos
-        const availableCourses = allCoursesResult.data.filter(curso =>
-          curso.activo && !enrolledCourseIds.includes(curso.id)
-        )
-
-        return { success: true, data: availableCourses }
-      } catch (error) {
-        return { success: false, error: 'Error al cargar cursos disponibles' }
-      }
-    },
-    { enabled: !!user }
-  )
+   const {
+     data: cursosDisponibles,
+     loading: loadingCursosDisponibles,
+     error: errorCursosDisponibles,
+     refetch: refetchCursosDisponibles
+   } = useAsyncData(
+     () => user ? coursesService.getCursosDisponiblesByEstudiante(user.id) : Promise.resolve({ success: false, error: 'Usuario no disponible' }),
+     { enabled: !!user }
+   )
 
   // Estadísticas del estudiante
   const {

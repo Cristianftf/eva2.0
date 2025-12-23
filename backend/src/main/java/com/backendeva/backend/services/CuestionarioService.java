@@ -2,6 +2,7 @@ package com.backendeva.backend.services;
 
 import com.backendeva.backend.dto.EnviarCuestionarioDto;
 import com.backendeva.backend.dto.RespuestaEstudianteDto;
+import com.backendeva.backend.dto.ResultadoCuestionarioDto;
 import com.backendeva.backend.model.*;
 import com.backendeva.backend.repository.CuestionarioRepository;
 import com.backendeva.backend.repository.ResultadoRepository;
@@ -192,17 +193,17 @@ public class CuestionarioService {
         return List.of(new HashMap<>()); // Lista vacía por ahora
     }
 
-    public List<Map<String, Object>> getResultadosByEstudiante(Long estudianteId) {
+    public List<ResultadoCuestionarioDto> getResultadosByEstudiante(Long estudianteId) {
         List<Resultado> resultados = resultadoRepository.findByEstudianteId(estudianteId);
         return resultados.stream().map(resultado -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", resultado.getId());
-            map.put("cuestionario", resultado.getCuestionario().getTitulo());
-            map.put("curso", resultado.getCuestionario().getCurso().getTitulo());
-            map.put("calificacion", resultado.getCalificacion());
-            map.put("fecha", resultado.getFechaCompletado());
-            map.put("estado", resultado.getCalificacion() >= 70 ? "aprobado" : "reprobado");
-            return map;
+            ResultadoCuestionarioDto dto = new ResultadoCuestionarioDto();
+            dto.setId(resultado.getId());
+            dto.setCuestionario(resultado.getCuestionario().getTitulo());
+            dto.setCurso(resultado.getCuestionario().getCurso().getTitulo());
+            dto.setCalificacion((int) Math.round(resultado.getCalificacion()));
+            dto.setFecha(resultado.getFechaCompletado());
+            dto.setEstado(resultado.getCalificacion() >= 70 ? "aprobado" : "reprobado");
+            return dto;
         }).toList();
     }
 
