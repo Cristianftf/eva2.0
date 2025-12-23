@@ -1,76 +1,62 @@
-# Configuración Local - EduSearch Frontend
+# Configuración Local - HealthConnect (Plataforma Integral de Salud)
 
 ## Estado del Proyecto
 
-### ✅ Correcciones Aplicadas
+### ✅ Optimizaciones Completadas
 
-#### 1. Configuración de Entorno Local
-- **Archivo creado**: `.env.local`
-- **Contenido**:
-  ```env
-  NEXT_PUBLIC_API_URL=http://localhost:8080/api
-  PORT=3000
-  NODE_ENV=development
-  ```
-- **Propósito**: Configura el frontend para conectarse al backend Spring en `http://localhost:8080`
+#### 1. **Transformación a Plataforma de Salud**
+- **Enfoque cambiado**: De educativo a plataforma médica integral
+- **Terminología actualizada**: Cursos → Programas, Estudiantes → Pacientes
+- **APIs de salud integradas**: PubMed, WHO, CDC con fallback local
+- **Biblioteca médica**: 5 recursos de salud básicos incluidos
 
-#### 2. Configuración de Next.js Mejorada
-- **Archivo**: `next.config.mjs`
-- **Cambios**:
-  - Agregado rewrites para proxying de `/api/*` a `http://localhost:8080/api/*`
-  - Agregado CORS headers para desarrollo local
-  - Mantiene `typescript.ignoreBuildErrors: true` (para compilación rápida)
-  - Mantiene `images.unoptimized: true` (para desarrollo local)
+#### 2. **Optimizaciones de Rendimiento Frontend**
+- **Lazy Loading**: Componentes cargados bajo demanda
+- **Code Splitting**: Chunks separados por funcionalidad
+- **Memoización**: Componentes optimizados con React.memo
+- **Cache inteligente**: React Query con estrategias específicas
 
-#### 3. Middleware Optimizado
-- **Archivo**: `middleware.ts`
-- **Cambios**:
-  - `matcher` limitado a rutas específicas (dashboard, admin, estudiante, profesor, auth)
-  - Evita ejecutarse en rutas estáticas y públicas
-  - Reduce conflictos y 404 inesperados
+#### 3. **Optimizaciones de Backend**
+- **Cache Caffeine**: Reemplaza ConcurrentMap por implementación de alto rendimiento
+- **Pool de conexiones**: HikariCP optimizado (20 max, 5 min)
+- **Índices de BD**: Optimizados para consultas frecuentes
+- **Transacciones**: Manejo adecuado con @Transactional
+- **Validaciones**: Jakarta Validation en entidades
 
-#### 4. Estructura de Rutas Confirmada
-Las siguientes rutas están correctamente configuradas y son accesibles:
-- ✅ `/` - Página de inicio
-- ✅ `/auth/login` - Página de login
-- ✅ `/auth/register` - Página de registro
-- ✅ `/dashboard` - Dashboard adaptivo (redirige según rol)
-- ✅ `/admin/dashboard` - Panel admin
-- ✅ `/profesor/dashboard` - Panel profesor
-- ✅ `/estudiante/dashboard` - Panel estudiante
+#### 4. **Mejores Prácticas Implementadas**
+- **Inyección de dependencias**: Constructor injection en lugar de @Autowired
+- **Logging estructurado**: SLF4J con niveles apropiados
+- **Manejo de errores**: Excepciones específicas y mensajes claros
+- **DTOs optimizados**: Separación clara entre entidades y respuestas
 
-#### 5. Servicios y Configuración de API
-- **archivo**: `lib/config/api.config.ts`
-- **URL base**: `http://localhost:8080/api` (configurable por env var)
-- **Endpoints documentados**: Auth, Cursos, Temas, Multimedia, Cuestionarios, Inscripciones, Mensajes, Notificaciones, Recursos, Informes, Estadísticas
-
-#### 6. Autenticación Configurada
-- **Context**: `lib/context/auth.context.tsx`
-- **Service**: `lib/services/auth.service.ts`
-- **Flow**:
-  1. Login/Register en `/auth/login` o `/auth/register`
-  2. Token guardado en cookies
-  3. Redirige a `/dashboard` (que redirige según rol)
-  4. Middleware protege rutas autenticadas
+#### 5. **Configuración Multi-entorno**
+- **Desarrollo**: Configurado para desarrollo local
+- **Producción**: Archivo `application-production.properties` optimizado
+- **JVM tuning**: Configuración de GC y memoria optimizada
 
 ---
 
 ## Requisitos del Sistema Local
 
-### Backend (Spring Boot)
-- **Ubicación**: `D:\eva2.0\backend\`
+### Backend (Spring Boot Optimizado)
+- **Ubicación**: `./backend/`
 - **Puerto**: 8080
 - **DB**: PostgreSQL en `localhost:5432`
 - **Credenciales**: usuario=`postgres`, password=`postgres`
 - **Base de datos**: `eva_db`
-- **Comando para arrancar**:
+- **Comando recomendado**:
   ```bash
+  # Usar script optimizado
+  chmod +x scripts/start-backend.sh
+  ./scripts/start-backend.sh
+
+  # O manualmente
   cd backend
   mvn spring-boot:run
   ```
 
-### Frontend (Next.js)
-- **Ubicación**: `D:\eva2.0\`
+### Frontend (Next.js Optimizado)
+- **Ubicación**: `./`
 - **Puerto**: 3000
 - **Node**: v21+ (recomendado)
 - **Comando para arrancar**:
@@ -86,9 +72,11 @@ Las siguientes rutas están correctamente configuradas y son accesibles:
 |-----------|-----|
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:8080/api |
+| Health Check | http://localhost:8080/api/auth/health |
 | Página de inicio | http://localhost:3000 |
 | Login | http://localhost:3000/auth/login |
 | Registro | http://localhost:3000/auth/register |
+| Dashboard Profesional | http://localhost:3000/profesor/dashboard |
 
 ---
 

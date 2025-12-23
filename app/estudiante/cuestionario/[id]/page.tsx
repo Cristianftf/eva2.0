@@ -24,6 +24,8 @@ export default function TomarCuestionarioPage() {
   const [tiempoRestante, setTiempoRestante] = useState<number | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [resultado, setResultado] = useState<{ calificacion: number; aprobado: boolean; detallesRespuestas?: any[] } | null>(null)
+  const [modoRevision, setModoRevision] = useState(false)
 
   useEffect(() => {
     cargarCuestionario()
@@ -115,17 +117,18 @@ export default function TomarCuestionarioPage() {
         return
       }
 
-      const resultado = await cuestionariosService.enviarRespuestasCompletas(
+      const resultadoEnvio = await cuestionariosService.enviarRespuestasCompletas(
         Number(params.id),
         respuestasArray
       )
 
+      setResultado(resultadoEnvio)
+      setModoRevision(true)
+
       toast({
         title: "Cuestionario enviado exitosamente",
-        description: `Calificación: ${resultado.calificacion}% - ${resultado.aprobado ? 'Aprobado' : 'Reprobado'}`,
+        description: `Calificación: ${resultadoEnvio.calificacion}% - ${resultadoEnvio.aprobado ? 'Aprobado' : 'Reprobado'}`,
       })
-
-      router.push("/estudiante/dashboard")
     } catch (error: any) {
       console.error("Error al enviar cuestionario:", error)
       toast({
@@ -173,6 +176,82 @@ export default function TomarCuestionarioPage() {
   const respuestasCompletadas = Object.keys(respuestas).length
   const respuestaActual = respuestas[pregunta.id]
 
+  if (modoRevision && resultado) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="mb-6 space-y-4">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-balance">{cuestionario.titulo}</h1>
+            <p className="text-muted-foreground mt-1">{cuestionario.descripcion}</p>
+          </div>
+
+          <Card className="text-center">
+            <CardHeader>
+              <CardTitle className="text-2xl">Resultado Final</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-6xl font-bold">
+                  {resultado.calificacion}%
+                </div>
+                <div className={`text-xl font-semibold ${resultado.aprobado ? 'text-green-600' : 'text-red-600'}`}>
+                  {resultado.aprobado ? 'APROBADO' : 'REPROBADO'}
+                </div>
+                <div className="text-muted-foreground">
+                  Respuestas correctas: {resultado.detallesRespuestas?.filter(d => d.esCorrecta).length || 0} de {preguntas.length}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Revisión de Respuestas</h2>
+          {preguntas.map((pregunta, index) => {
+            const detalle = resultado.detallesRespuestas?.find(d => d.preguntaId === pregunta.id)
+            const respuestaEstudiante = respuestas[pregunta.id]
+
+            return (
+              <Card key={pregunta.id} className={detalle?.esCorrecta ? 'border-green-200' : 'border-red-200'}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Pregunta {index + 1}</CardTitle>
+                    {detalle?.esCorrecta ? (
+                      <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-6 w-6 text-red-600" />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <PreguntaFactory
+                    pregunta={pregunta}
+                    respuesta={respuestaEstudiante}
+                    onRespuestaSeleccionada={() => {}}
+                    mostrarRespuesta={true}
+                    readonly={true}
+                  />
+                  {!detalle?.esCorrecta && (
+                    <div className="mt-4 p-4 bg-red-50 rounded-lg">
+                      <p className="font-semibold text-red-800">Respuesta correcta:</p>
+                      <p className="text-red-700">{detalle?.respuestaCorrecta || 'Ver explicación arriba'}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        <div className="mt-8 text-center">
+          <Button onClick={() => router.push("/estudiante/dashboard")}>
+            Volver al Dashboard
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-6 space-y-4">
@@ -181,7 +260,7 @@ export default function TomarCuestionarioPage() {
             <h1 className="text-3xl font-bold text-balance">{cuestionario.titulo}</h1>
             <p className="text-muted-foreground mt-1">{cuestionario.descripcion}</p>
           </div>
-          {tiempoRestante !== null && (
+          {tiempoRestante !== null && !modoRevision && (
             <Card className={tiempoRestante < 300 ? "border-destructive" : ""}>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">

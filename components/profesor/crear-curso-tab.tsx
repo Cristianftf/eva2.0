@@ -25,8 +25,15 @@ export function CrearCursoTab() {
     descripcion: "",
     objetivos: "",
     duracionEstimada: "",
-    nivel: "principiante",
+    nivel: "principiante" as "principiante" | "intermedio" | "avanzado",
     categoria: "",
+    prerrequisitos: "",
+    resultadosAprendizaje: "",
+    habilidades: "",
+    idioma: "español",
+    precio: "",
+    imagenPortada: "",
+    etiquetas: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,20 +49,43 @@ export function CrearCursoTab() {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         objetivos: formData.objetivos,
-        duracionEstimada: parseInt(formData.duracionEstimada) || null,
+        duracionEstimada: formData.duracionEstimada ? parseInt(formData.duracionEstimada) : undefined,
         nivel: formData.nivel,
         categoria: formData.categoria,
         profesorId: user.id,
         activo: true,
+        prerrequisitos: formData.prerrequisitos,
+        resultadosAprendizaje: formData.resultadosAprendizaje,
+        habilidades: formData.habilidades,
+        idioma: formData.idioma,
+        precio: formData.precio ? parseFloat(formData.precio) : undefined,
+        imagenPortada: formData.imagenPortada,
+        etiquetas: formData.etiquetas,
       })
 
       if (result.success && result.data) {
         setSuccess(true)
-        setFormData({ titulo: "", descripcion: "", objetivos: "", duracionEstimada: "", nivel: "principiante", categoria: "" })
+        setFormData({
+          titulo: "",
+          descripcion: "",
+          objetivos: "",
+          duracionEstimada: "",
+          nivel: "principiante",
+          categoria: "",
+          prerrequisitos: "",
+          resultadosAprendizaje: "",
+          habilidades: "",
+          idioma: "español",
+          precio: "",
+          imagenPortada: "",
+          etiquetas: "",
+        })
 
         // Redirigir al curso creado después de 2 segundos
         setTimeout(() => {
-          router.push(`/profesor/curso/${result.data.id}`)
+          if (result.data?.id) {
+            router.push(`/profesor/curso/${result.data.id}`)
+          }
         }, 2000)
       } else {
         setError(result.error || "Error al crear curso")
@@ -153,7 +183,7 @@ export function CrearCursoTab() {
               <select
                 id="nivel"
                 value={formData.nivel}
-                onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, nivel: e.target.value as "principiante" | "intermedio" | "avanzado" })}
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
@@ -175,6 +205,96 @@ export function CrearCursoTab() {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="prerrequisitos">Prerrequisitos</Label>
+            <Textarea
+              id="prerrequisitos"
+              placeholder="¿Qué conocimientos previos necesitan los estudiantes?"
+              value={formData.prerrequisitos}
+              onChange={(e) => setFormData({ ...formData, prerrequisitos: e.target.value })}
+              rows={3}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="resultadosAprendizaje">Resultados de Aprendizaje</Label>
+            <Textarea
+              id="resultadosAprendizaje"
+              placeholder="¿Qué serán capaces de hacer los estudiantes al finalizar?"
+              value={formData.resultadosAprendizaje}
+              onChange={(e) => setFormData({ ...formData, resultadosAprendizaje: e.target.value })}
+              rows={4}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="habilidades">Habilidades que se Desarrollarán</Label>
+            <Textarea
+              id="habilidades"
+              placeholder="Lista las habilidades técnicas y blandas que aprenderán"
+              value={formData.habilidades}
+              onChange={(e) => setFormData({ ...formData, habilidades: e.target.value })}
+              rows={3}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="idioma">Idioma del Curso</Label>
+              <select
+                id="idioma"
+                value={formData.idioma}
+                onChange={(e) => setFormData({ ...formData, idioma: e.target.value })}
+                className="w-full p-2 border rounded"
+                disabled={loading}
+              >
+                <option value="español">Español</option>
+                <option value="ingles">Inglés</option>
+                <option value="portugues">Portugués</option>
+                <option value="frances">Francés</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="precio">Precio (opcional)</Label>
+              <Input
+                id="precio"
+                type="number"
+                placeholder="0.00"
+                step="0.01"
+                value={formData.precio}
+                onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="imagenPortada">URL de Imagen de Portada</Label>
+            <Input
+              id="imagenPortada"
+              type="url"
+              placeholder="https://ejemplo.com/imagen.jpg"
+              value={formData.imagenPortada}
+              onChange={(e) => setFormData({ ...formData, imagenPortada: e.target.value })}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="etiquetas">Etiquetas (separadas por comas)</Label>
+            <Input
+              id="etiquetas"
+              placeholder="programación, javascript, web development..."
+              value={formData.etiquetas}
+              onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })}
+              disabled={loading}
+            />
+          </div>
+
           <div className="flex gap-4">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? (
@@ -189,7 +309,21 @@ export function CrearCursoTab() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFormData({ titulo: "", descripcion: "", objetivos: "", duracionEstimada: "", nivel: "principiante", categoria: "" })}
+              onClick={() => setFormData({
+                titulo: "",
+                descripcion: "",
+                objetivos: "",
+                duracionEstimada: "",
+                nivel: "principiante",
+                categoria: "",
+                prerrequisitos: "",
+                resultadosAprendizaje: "",
+                habilidades: "",
+                idioma: "español",
+                precio: "",
+                imagenPortada: "",
+                etiquetas: "",
+              })}
               disabled={loading}
             >
               Limpiar

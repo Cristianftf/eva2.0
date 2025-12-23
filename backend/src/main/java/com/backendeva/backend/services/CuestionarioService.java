@@ -2,7 +2,7 @@ package com.backendeva.backend.services;
 
 import com.backendeva.backend.dto.EnviarCuestionarioDto;
 import com.backendeva.backend.dto.RespuestaEstudianteDto;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.backendeva.backend.dto.ResultadoCuestionarioDto;
 import com.backendeva.backend.model.*;
 import com.backendeva.backend.repository.CuestionarioRepository;
 import com.backendeva.backend.repository.ResultadoRepository;
@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,9 +115,75 @@ public class CuestionarioService {
         resultado.setCalificacion(calificacion);
         resultadoRepository.save(resultado);
 
+        // Crear detalles de respuestas para revisión
+        List<Map<String, Object>> detallesRespuestas = new ArrayList<>();
+        for (RespuestaEstudianteDto respuestaData : respuestasData) {
+            Integer preguntaId = respuestaData.getPreguntaId();
+            if (preguntaId != null) {
+                Pregunta pregunta = preguntas.stream()
+                    .filter(p -> p.getId().intValue() == preguntaId)
+                    .findFirst()
+                    .orElse(null);
+
+                if (pregunta != null) {
+                    boolean esCorrecta = evaluarRespuesta(pregunta, respuestaData.getRespuesta());
+                    Map<String, Object> detalle = new HashMap<>();
+                    detalle.put("preguntaId", preguntaId);
+                    detalle.put("esCorrecta", esCorrecta);
+                    detalle.put("respuestaEstudiante", respuestaData.getRespuesta());
+                    // Agregar respuesta correcta según el tipo
+                    switch (pregunta.getTipoPregunta()) {
+                        case OPCION_MULTIPLE:
+                        case VERDADERO_FALSO:
+                            Respuesta respuestaCorrecta = pregunta.getRespuestas().stream()
+                                .filter(Respuesta::getEsCorrecta)
+                                .findFirst()
+                                .orElse(null);
+                            if (respuestaCorrecta != null) {
+                                detalle.put("respuestaCorrecta", respuestaCorrecta.getTextoRespuesta());
+                                detalle.put("respuestaCorrectaId", respuestaCorrecta.getId());
+                            }
+                            break;
+                        case COMPLETAR_TEXTO:
+                        case RESPUESTA_CORTA:
+                            List<String> respuestasCorrectasTexto = pregunta.getRespuestas().stream()
+                                .map(r -> r.getValor() != null ? r.getValor() : r.getTextoRespuesta())
+                                .filter(java.util.Objects::nonNull)
+                                .toList();
+                            detalle.put("respuestasCorrectas", respuestasCorrectasTexto);
+                            break;
+                        case ORDENAR_ELEMENTOS:
+                            List<String> ordenCorrecto = pregunta.getRespuestas().stream()
+                                .sorted((a, b) -> a.getOrden().compareTo(b.getOrden()))
+                                .map(Respuesta::getTextoRespuesta)
+                                .toList();
+                            detalle.put("ordenCorrecto", ordenCorrecto);
+                            break;
+                        case ARRASTRAR_SOLTAR:
+                            Map<String, String> asociacionesCorrectas = new HashMap<>();
+                            for (Respuesta destino : pregunta.getRespuestas()) {
+                                if ("destino".equals(destino.getGrupo())) {
+                                    Respuesta origenCorrecto = pregunta.getRespuestas().stream()
+                                        .filter(r -> "origen".equals(r.getGrupo()) && destino.getEsCorrecta())
+                                        .findFirst()
+                                        .orElse(null);
+                                    if (origenCorrecto != null) {
+                                        asociacionesCorrectas.put(destino.getTextoRespuesta(), origenCorrecto.getTextoRespuesta());
+                                    }
+                                }
+                            }
+                            detalle.put("asociacionesCorrectas", asociacionesCorrectas);
+                            break;
+                    }
+                    detallesRespuestas.add(detalle);
+                }
+            }
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("calificacion", Math.round(calificacion));
         response.put("aprobado", aprobado);
+        response.put("detallesRespuestas", detallesRespuestas);
         return response;
     }
 
@@ -126,17 +193,17 @@ public class CuestionarioService {
         return List.of(new HashMap<>()); // Lista vacía por ahora
     }
 
-    public List<Map<String, Object>> getResultadosByEstudiante(Long estudianteId) {
+    public List<ResultadoCuestionarioDto> getResultadosByEstudiante(Long estudianteId) {
         List<Resultado> resultados = resultadoRepository.findByEstudianteId(estudianteId);
         return resultados.stream().map(resultado -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", resultado.getId());
-            map.put("cuestionario", resultado.getCuestionario().getTitulo());
-            map.put("curso", resultado.getCuestionario().getCurso().getTitulo());
-            map.put("calificacion", resultado.getCalificacion());
-            map.put("fecha", resultado.getFechaCompletado());
-            map.put("estado", resultado.getCalificacion() >= 70 ? "aprobado" : "reprobado");
-            return map;
+            ResultadoCuestionarioDto dto = new ResultadoCuestionarioDto();
+            dto.setId(resultado.getId());
+            dto.setCuestionario(resultado.getCuestionario().getTitulo());
+            dto.setCurso(resultado.getCuestionario().getCurso().getTitulo());
+            dto.setCalificacion((int) Math.round(resultado.getCalificacion()));
+            dto.setFecha(resultado.getFechaCompletado());
+            dto.setEstado(resultado.getCalificacion() >= 70 ? "aprobado" : "reprobado");
+            return dto;
         }).toList();
     }
 
@@ -182,6 +249,19 @@ public class CuestionarioService {
                         
                     case COMPLETAR_TEXTO:
                         // Respuestas de texto libre
+                        preguntaMap.put("respuestasReferencia", pregunta.getRespuestas().stream()
+                            .map(respuesta -> {
+                                Map<String, Object> respuestaMap = new HashMap<>();
+                                respuestaMap.put("id", respuesta.getId());
+                                respuestaMap.put("valor", respuesta.getValor());
+                                respuestaMap.put("texto", respuesta.getTextoRespuesta());
+                                return respuestaMap;
+                            })
+                            .toList());
+                        break;
+
+                    case RESPUESTA_CORTA:
+                        // Similar a completar texto pero para respuestas cortas
                         preguntaMap.put("respuestasReferencia", pregunta.getRespuestas().stream()
                             .map(respuesta -> {
                                 Map<String, Object> respuestaMap = new HashMap<>();
@@ -271,7 +351,8 @@ public class CuestionarioService {
                        pregunta.getRespuestas().stream().anyMatch(Respuesta::getEsCorrecta);
                        
             case COMPLETAR_TEXTO:
-                // Las preguntas de completar texto pueden no tener respuestas definidas
+            case RESPUESTA_CORTA:
+                // Las preguntas de texto pueden no tener respuestas definidas
                 return true;
                 
             case ARRASTRAR_SOLTAR:
@@ -316,13 +397,14 @@ public class CuestionarioService {
                 return false;
                 
             case COMPLETAR_TEXTO:
+            case RESPUESTA_CORTA:
                 if (respuestaEstudiante instanceof String) {
                     String textoIngresado = ((String) respuestaEstudiante).toLowerCase().trim();
                     return pregunta.getRespuestas().stream()
                         .anyMatch(r -> {
                             String valorCorrecto = r.getValor() != null ? r.getValor() : r.getTextoRespuesta();
                             return valorCorrecto != null &&
-                                   valorCorrecto.toLowerCase().trim().equals(textoIngresado);
+                                    valorCorrecto.toLowerCase().trim().equals(textoIngresado);
                         });
                 }
                 return false;

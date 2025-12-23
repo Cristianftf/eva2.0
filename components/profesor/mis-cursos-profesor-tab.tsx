@@ -1,98 +1,70 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/lib/context/auth.context"
-import { coursesService } from "@/lib/services/courses.service"
-import type { Curso } from "@/lib/types"
+import { useProfessorData } from "@/hooks/use-professor-data"
+import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
+import { LoadingState, ErrorState, EmptyState, SkeletonGrid } from "@/components/ui/data-states"
 import { BookOpen, Users, Edit, Trash2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 export function MisCursosProfesorTab() {
-  const { user } = useAuth()
-  const [cursos, setCursos] = useState<Curso[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (user) {
-      loadCursos()
-    }
-  }, [user])
-
-  const loadCursos = async () => {
-    if (!user) return
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const result = await coursesService.getCoursesByProfesor(user.id)
-
-      if (result.success && result.data) {
-        setCursos(result.data)
-      } else {
-        setError(result.error || "Error al cargar cursos")
-      }
-    } catch (err) {
-      setError("Error de conexión al cargar cursos")
-      console.error("Error loading professor courses:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { cursos, loading, error, eliminarCurso, refetchCursos } = useProfessorData()
+  const { confirm } = useConfirmationDialog()
+  const { toast } = useToast()
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este curso?")) return
+    const confirmed = await confirm("¿Estás seguro de eliminar este curso? Esta acción no se puede deshacer.")
+    if (!confirmed) return
 
     try {
-      const result = await coursesService.deleteCourse(id)
-
+      const result = await eliminarCurso(id)
       if (result.success) {
-        setCursos(cursos.filter((c) => c.id !== id))
+        toast({
+          title: "Curso eliminado",
+          description: "El curso ha sido eliminado exitosamente.",
+        })
       } else {
-        alert(result.error || "Error al eliminar curso")
+        toast({
+          title: "Error",
+          description: result.error || "Error al eliminar el curso",
+          variant: "destructive",
+        })
       }
     } catch (err) {
-      alert("Error de conexión al eliminar curso")
-      console.error("Error deleting course:", err)
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo eliminar el curso. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
     }
   }
 
   if (loading) {
-    return (
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-64" />
-        ))}
-      </div>
-    )
+    return <SkeletonGrid count={6} columns={3} />
   }
 
   if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
+    return <ErrorState error={error} onRetry={refetchCursos} />
   }
 
-  if (cursos.length === 0) {
+  if (!cursos || cursos.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No has creado ningún curso</h3>
-          <p className="text-muted-foreground mb-6 text-center">
-            Comienza creando tu primer curso para compartir conocimiento
-          </p>
-          <Button>Crear Primer Curso</Button>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={BookOpen}
+        title="No has creado ningún curso"
+        description="Comienza creando tu primer curso para compartir conocimiento con tus estudiantes"
+        action={{
+          label: "Crear Primer Curso",
+          onClick: () => {
+            // Navigate to create course tab
+            const createTab = document.querySelector('[value="crear-curso"]') as HTMLElement
+            createTab?.click()
+          }
+        }}
+      />
     )
   }
 
@@ -112,7 +84,7 @@ export function MisCursosProfesorTab() {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{curso.estudiantesInscritos || 0} estudiantes</span>
+                <span>0 estudiantes</span> {/* TODO: Implementar conteo real de estudiantes */}
               </div>
             </div>
 

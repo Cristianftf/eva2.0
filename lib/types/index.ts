@@ -9,22 +9,35 @@ export interface User {
   apellido: string
   rol: UserRole
   fotoPerfil?: string
-  fechaRegistro: string
+  fechaRegistro: string // ISO date string from LocalDate
   activo: boolean
+  // Campos adicionales del backend que no se exponen al frontend por seguridad:
+  // password: string (nunca se envía al frontend)
+  // lastSeen: string (no necesario para la UI)
 }
 
 export interface Curso {
   id: string
   titulo: string
   descripcion: string
-  profesorId: string
+  objetivos?: string
+  profesorId?: string // Derivado de profesor.id
   profesor?: User
-  imagen?: string
-  fechaCreacion: string
-  fechaActualizacion: string
+  imagenPortada?: string // Campo correcto del backend (no 'imagen')
+  fechaCreacion: string // ISO date string from LocalDate
   activo: boolean
   duracionEstimada?: number // en horas
-  nivel?: "basico" | "intermedio" | "avanzado"
+  nivel?: "principiante" | "intermedio" | "avanzado" | string
+  categoria?: string
+  // Nuevos campos para cursos enriquecidos
+  prerrequisitos?: string
+  resultadosAprendizaje?: string
+  habilidades?: string
+  idioma?: string
+  precio?: number
+  etiquetas?: string
+  // Campo adicional del backend no usado en frontend:
+  // metadataLom?: string (JSON string, no necesario en frontend)
 }
 
 export interface Tema {
@@ -39,13 +52,16 @@ export interface Tema {
 
 export interface MultimediaItem {
   id: string
-  temaId: string
-  tipo: "video" | "audio" | "documento" | "imagen" | "enlace"
-  titulo: string
-  url: string
-  duracion?: number // para videos y audios en segundos
-  tamanio?: number // en bytes
-  fechaSubida: string
+  nombreArchivo: string
+  tipo: string // video, audio, imagen, documento
+  urlArchivo: string
+  urlSubtitulos?: string
+  urlThumbnail?: string
+  tamanioBytes?: number
+  duracionSegundos?: number
+  temaId?: string // Ahora disponible desde el DTO
+  tema?: Tema
+  fechaSubida: string // ISO datetime string from LocalDateTime
 }
 
 export interface Cuestionario {
@@ -107,6 +123,7 @@ export interface Inscripcion {
   progreso: number // 0-100
   completado: boolean
   fechaCompletado?: string
+  estado: "PENDIENTE" | "APROBADA" | "RECHAZADA"
   curso?: {
     titulo: string
     descripcion: string
@@ -144,7 +161,16 @@ export interface RecursoConfiable {
   url: string
   categoria: string
   imagen?: string
-  fechaAgregado: string
+  fechaAgregado?: string // ISO datetime string from LocalDateTime
+  // Campos adicionales para salud - ahora coinciden con el backend
+  contenido?: string
+  especialidad?: string
+  urgencia?: 'baja' | 'media' | 'alta'
+  tipo?: 'prevencion' | 'diagnostico' | 'tratamiento' | 'seguimiento'
+  fuente?: string
+  fechaCreacion?: string // ISO datetime string from LocalDateTime
+  verificado?: boolean
+  tags?: string // JSON string array en backend, se puede parsear en frontend
 }
 
 export interface InformeEstudiante {
@@ -158,6 +184,15 @@ export interface InformeEstudiante {
   promedioNotas: number
   tiempoTotal: number // en minutos
   ultimaActividad: string
+}
+
+export interface ResultadoCuestionario {
+  id: number
+  curso: string
+  cuestionario: string
+  calificacion: number
+  fecha: string
+  estado: string
 }
 
 // Tipos para respuestas de API

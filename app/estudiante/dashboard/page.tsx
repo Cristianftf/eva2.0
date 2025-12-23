@@ -1,74 +1,66 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProtectedRoute } from "@/components/layout/protected-route"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/lib/context/auth.context"
-import { inscripcionesService } from "@/lib/services/inscripciones.service"
-import { estadisticasService } from "@/lib/services/estadisticas.service"
+import { useStudentData } from "@/hooks/use-student-data"
+import { StatsCard } from "@/components/ui/stats-card"
+import { LoadingState } from "@/components/ui/data-states"
 import { MisCursosTab } from "@/components/estudiante/mis-cursos-tab"
 import { CursosDisponiblesTab } from "@/components/estudiante/cursos-disponibles-tab"
 import { MisCalificacionesTab } from "@/components/estudiante/mis-calificaciones-tab"
 import { BookOpen, Award, TrendingUp, Clock } from "lucide-react"
+import { useMemo } from "react"
 
 export default function EstudianteDashboardPage() {
   const { user } = useAuth()
-  const [stats, setStats] = useState({
-    cursosInscritos: 0,
-    cursosCompletados: 0,
-    progresoPromedio: 0,
-    horasEstudio: 0,
-  })
-  const [loading, setLoading] = useState(true)
+  const {
+    cursosInscritos,
+    estadisticas,
+    loading: dataLoading
+  } = useStudentData()
 
-  useEffect(() => {
-    if (user) {
-      loadStats()
+  // Calcular estadísticas usando useMemo para optimización
+  const stats = useMemo(() => {
+    if (!cursosInscritos) return null
+
+    const completados = cursosInscritos.filter((i) => i.completado).length
+    const promedioProgreso = cursosInscritos.reduce((acc, i) => acc + i.progreso, 0) / cursosInscritos.length || 0
+
+    return {
+      cursosInscritos: cursosInscritos.length,
+      cursosCompletados: completados,
+      progresoPromedio: Math.round(promedioProgreso),
+      horasEstudio: estadisticas?.horasEstudio || 0,
     }
-  }, [user])
+  }, [cursosInscritos, estadisticas])
 
-  const loadStats = async () => {
-    if (!user) return
-
-    setLoading(true)
-
-    const [inscripcionesResult, statsResult] = await Promise.all([
-      inscripcionesService.getByEstudiante(user.id),
-      estadisticasService.getEstudiante(user.id),
-    ])
-
-    if (inscripcionesResult.success && inscripcionesResult.data) {
-      const inscripciones = inscripcionesResult.data
-      const completados = inscripciones.filter((i) => i.progreso === 100).length
-      const promedioProgreso = inscripciones.reduce((acc, i) => acc + i.progreso, 0) / inscripciones.length || 0
-
-      setStats({
-        cursosInscritos: inscripciones.length,
-        cursosCompletados: completados,
-        progresoPromedio: Math.round(promedioProgreso),
-        horasEstudio: 0,
-      })
-    }
-
-    if (statsResult.success && statsResult.data) {
-      setStats((prev) => ({
-        ...prev,
-        horasEstudio: statsResult.data.horasEstudio || 0,
-      }))
-    }
-
-    setLoading(false)
+  // Mostrar loading mientras se carga la información del usuario
+  if (dataLoading) {
+    return (
+      <ProtectedRoute allowedRoles={["ESTUDIANTE"]}>
+        <DashboardLayout>
+          <div className="space-y-8">
+            <LoadingState message="Cargando dashboard del estudiante..." />
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
   }
 
+  // Verificar que user existe antes de mostrar el contenido
   if (!user) {
     return (
       <ProtectedRoute allowedRoles={["ESTUDIANTE"]}>
         <DashboardLayout>
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="space-y-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-muted-foreground">No se pudo cargar la información del usuario</p>
+              </div>
+            </div>
           </div>
         </DashboardLayout>
       </ProtectedRoute>
@@ -87,49 +79,37 @@ export default function EstudianteDashboardPage() {
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cursos Inscritos</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.cursosInscritos}</div>
-              <p className="text-xs text-muted-foreground">Cursos activos</p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Cursos Inscritos"
+            value={stats?.cursosInscritos || 0}
+            description="Cursos activos"
+            icon={BookOpen}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completados</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.cursosCompletados}</div>
-              <p className="text-xs text-muted-foreground">Cursos finalizados</p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Completados"
+            value={stats?.cursosCompletados || 0}
+            description="Cursos finalizados"
+            icon={Award}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progreso Promedio</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.progresoPromedio}%</div>
-              <Progress value={stats.progresoPromedio} className="mt-2" />
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Progreso Promedio"
+            value={`${stats?.progresoPromedio || 0}%`}
+            description="Avance general"
+            icon={TrendingUp}
+            loading={dataLoading}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Horas de Estudio</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.horasEstudio}h</div>
-              <p className="text-xs text-muted-foreground">Tiempo estimado</p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Horas de Estudio"
+            value={`${stats?.horasEstudio || 0}h`}
+            description="Tiempo estimado"
+            icon={Clock}
+            loading={dataLoading}
+          />
         </div>
 
         {/* Tabs */}

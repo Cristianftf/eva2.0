@@ -34,7 +34,7 @@ public class MultimediaService {
     }
 
     public MultimediaItem save(MultimediaItem multimedia) {
-        return multimediaRepository.save(java.util.Objects.requireNonNull(multimedia));
+        return multimediaRepository.save(multimedia);
     }
 
     public void deleteById(Long id) {
@@ -76,7 +76,7 @@ public class MultimediaService {
                 : "";
         String uniqueFilename = UUID.randomUUID().toString() + extension;
 
-        // Guardar archivo
+        // Guardar archivo principal
         Path filePath = uploadDir.resolve(uniqueFilename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -85,8 +85,49 @@ public class MultimediaService {
         multimedia.setNombreArchivo(originalFilename != null ? originalFilename : uniqueFilename);
         multimedia.setTipo(tipo);
         multimedia.setUrlArchivo("/uploads/cursos/" + cursoId + "/temas/" + temaId + "/" + uniqueFilename);
+        multimedia.setTamanioBytes(file.getSize());
         multimedia.setTema(tema);
 
+        // Para videos, intentar extraer duración (simplificado)
+        if (tipo.equals("video") && extension.equalsIgnoreCase(".mp4")) {
+            // En una implementación real, usar librerías como FFmpeg para extraer metadata
+            multimedia.setDuracionSegundos(0); // Placeholder
+        }
+
         return multimediaRepository.save(multimedia);
+    }
+
+    public MultimediaItem uploadWithExtras(MultipartFile file, MultipartFile subtitulos, MultipartFile thumbnail, Long temaId, String tipo) throws IOException {
+        MultimediaItem multimedia = upload(file, temaId, tipo);
+
+        if (subtitulos != null && !subtitulos.isEmpty()) {
+            String subtitulosUrl = saveAdditionalFile(subtitulos, multimedia.getTema().getCurso().getId(), multimedia.getTema().getId(), "subtitulos");
+            multimedia.setUrlSubtitulos(subtitulosUrl);
+        }
+
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            String thumbnailUrl = saveAdditionalFile(thumbnail, multimedia.getTema().getCurso().getId(), multimedia.getTema().getId(), "thumbnails");
+            multimedia.setUrlThumbnail(thumbnailUrl);
+        }
+
+        return multimediaRepository.save(multimedia);
+    }
+
+    private String saveAdditionalFile(MultipartFile file, Long cursoId, Long temaId, String subfolder) throws IOException {
+        Path uploadDir = Paths.get("uploads", "cursos", cursoId.toString(), "temas", temaId.toString(), subfolder);
+        if (!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : "";
+        String uniqueFilename = UUID.randomUUID().toString() + extension;
+
+        Path filePath = uploadDir.resolve(uniqueFilename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        return "/uploads/cursos/" + cursoId + "/temas/" + temaId + "/" + subfolder + "/" + uniqueFilename;
     }
 }

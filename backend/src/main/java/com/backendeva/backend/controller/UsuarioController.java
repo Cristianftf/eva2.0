@@ -1,47 +1,55 @@
 package com.backendeva.backend.controller;
 
+import com.backendeva.backend.dto.UserDto;
 import com.backendeva.backend.model.User;
 import com.backendeva.backend.services.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/usuarios")
+@RequiredArgsConstructor
+@Slf4j
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public User createUsuario(@RequestBody User user) {
-        return usuarioService.save(user);
+    public UserDto createUsuario(@RequestBody User user) {
+        User savedUser = usuarioService.save(user);
+        return convertToDto(savedUser);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> getAllUsuarios() {
-        return usuarioService.findAll();
+    public List<UserDto> getAllUsuarios() {
+        return usuarioService.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/chat-contacts")
     @PreAuthorize("hasRole('ESTUDIANTE') or hasRole('PROFESOR') or hasRole('ADMIN')")
-    public List<User> getChatContacts() {
+    public List<UserDto> getChatContacts() {
         // Retornar todos los usuarios activos excepto el usuario actual (se filtra en frontend)
         return usuarioService.findAll().stream()
                 .filter(u -> u.isActivo() && !u.getRol().equals("ADMIN"))
-                .toList();
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> getUsuarioById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUsuarioById(@PathVariable Long id) {
         return usuarioService.findById(id)
-                .map(ResponseEntity::ok)
+                .map(user -> ResponseEntity.ok(convertToDto(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -72,7 +80,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader("Authorization") String token) {
         // Extraer email del JWT para debugging
         try {
             String email = extractEmailFromToken(token.replace("Bearer ", ""));
@@ -80,7 +88,7 @@ public class UsuarioController {
                     .filter(u -> u.getEmail().equals(email))
                     .findFirst()
                     .orElse(null);
-            return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+            return user != null ? ResponseEntity.ok(convertToDto(user)) : ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
@@ -102,5 +110,18 @@ public class UsuarioController {
             // Ignore
         }
         return null;
+    }
+
+    private UserDto convertToDto(User user) {
+        return UserDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nombre(user.getNombre())
+                .apellido(user.getApellido())
+                .rol(user.getRol())
+                .fotoPerfil(user.getFotoPerfil())
+                .fechaRegistro(user.getFechaRegistro())
+                .activo(user.isActivo())
+                .build();
     }
 }

@@ -40,7 +40,7 @@ class ApiService {
     document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
   }
 
-  // Método genérico para hacer peticiones
+  // Método genérico para hacer peticiones con mejor manejo de errores
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const token = this.getToken()
     const url = `${this.baseUrl}${endpoint}`
@@ -66,31 +66,76 @@ class ApiService {
         return { success: true, data: undefined as T }
       }
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        // Si 401 y no está refrescando, intentar refresh
-        if (response.status === 401 && !this.isRefreshing) {
-          this.isRefreshing = true
-          try {
-            const refreshResponse = await this.request<{ token: string; user: any }>("/api/auth/refresh", {
-              method: "POST",
-            })
-            if (refreshResponse.success && refreshResponse.data) {
-              this.setToken(refreshResponse.data.token)
-              // Retry la petición original
-              this.isRefreshing = false
-              return this.request<T>(endpoint, options)
-            }
-          } catch {
-            // Falló refresh, continuar con error
-          } finally {
-            this.isRefreshing = false
-          }
-        }
+      let data: any
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        // Si no se puede parsear JSON, devolver error
         return {
           success: false,
-          error: data.message || data.error || "Error en la petición",
+          error: `Error al procesar respuesta del servidor: ${response.status} ${response.statusText}`,
+        }
+      }
+
+      if (!response.ok) {
+        // Manejar errores específicos
+        if (response.status === 400) {
+          return {
+            success: false,
+            error: data.message || "Datos inválidos en la petición",
+          }
+        }
+
+        if (response.status === 401) {
+          // Si 401 y no está refrescando, intentar refresh
+          if (!this.isRefreshing) {
+            this.isRefreshing = true
+            try {
+              const refreshResponse = await this.request<{ token: string; user: any }>("/auth/refresh", {
+                method: "POST",
+              })
+              if (refreshResponse.success && refreshResponse.data) {
+                this.setToken(refreshResponse.data.token)
+                // Retry la petición original
+                this.isRefreshing = false
+                return this.request<T>(endpoint, options)
+              }
+            } catch {
+              // Falló refresh, continuar con error
+            } finally {
+              this.isRefreshing = false
+            }
+          }
+          return {
+            success: false,
+            error: "Sesión expirada. Por favor, inicia sesión nuevamente.",
+          }
+        }
+
+        if (response.status === 403) {
+          return {
+            success: false,
+            error: "No tienes permisos para realizar esta acción",
+          }
+        }
+
+        if (response.status === 404) {
+          return {
+            success: false,
+            error: "Recurso no encontrado",
+          }
+        }
+
+        if (response.status >= 500) {
+          return {
+            success: false,
+            error: "Error interno del servidor. Inténtalo más tarde.",
+          }
+        }
+
+        return {
+          success: false,
+          error: data.message || data.error || `Error ${response.status}: ${response.statusText}`,
         }
       }
 
@@ -105,12 +150,20 @@ class ApiService {
         if (error.name === "AbortError") {
           return {
             success: false,
-            error: "La petición ha excedido el tiempo de espera",
+            error: "La petición ha excedido el tiempo de espera. Verifica tu conexión a internet.",
           }
         }
+
+        if (error.name === "TypeError" && error.message.includes("fetch")) {
+          return {
+            success: false,
+            error: "No se pudo conectar al servidor. Verifica que el backend esté ejecutándose.",
+          }
+        }
+
         return {
           success: false,
-          error: error.message,
+          error: `Error de conexión: ${error.message}`,
         }
       }
 
@@ -156,7 +209,7 @@ class ApiService {
   }
 
   // Método especial para subir archivos
-  async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string>): Promise<ApiResponse<T>> {
+  async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string | File>): Promise<ApiResponse<T>> {
     const token = this.getToken()
     const url = `${this.baseUrl}${endpoint}`
 
@@ -165,7 +218,11 @@ class ApiService {
 
     if (additionalData) {
       Object.entries(additionalData).forEach(([key, value]) => {
-        formData.append(key, value)
+        if (value instanceof File) {
+          formData.append(key, value)
+        } else {
+          formData.append(key, value)
+        }
       })
     }
 

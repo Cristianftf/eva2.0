@@ -26,6 +26,18 @@ public class MultimediaItem {
     @Column(nullable = false)
     private String urlArchivo;
 
+    @Column
+    private String urlSubtitulos;
+
+    @Column
+    private String urlThumbnail;
+
+    @Column
+    private Long tamanioBytes;
+
+    @Column
+    private Integer duracionSegundos;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "tema_id", nullable = false)

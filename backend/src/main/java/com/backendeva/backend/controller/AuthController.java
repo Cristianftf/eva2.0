@@ -99,6 +99,15 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        return ResponseEntity.ok(Map.of(
+            "status", "UP",
+            "timestamp", LocalDateTime.now().toString(),
+            "service", "edu-search-backend"
+        ));
+    }
+
     public static class ChangePasswordRequest {
         private String passwordActual;
         private String passwordNueva;

@@ -1,5 +1,7 @@
 package com.backendeva.backend.dto;
 
+import java.math.BigDecimal;
+
 public class CreateCursoDto {
     private String titulo;
     private String descripcion;
@@ -10,6 +12,15 @@ public class CreateCursoDto {
     private String profesorId;
     private boolean activo;
     private String metadataLom;
+
+    // Nuevos campos para cursos enriquecidos
+    private String prerrequisitos;
+    private String resultadosAprendizaje;
+    private String habilidades;
+    private String idioma;
+    private BigDecimal precio;
+    private String imagenPortada;
+    private String etiquetas;
 
     // Constructors
     public CreateCursoDto() {}
@@ -96,5 +107,62 @@ public class CreateCursoDto {
 
     public void setMetadataLom(String metadataLom) {
         this.metadataLom = metadataLom;
+    }
+
+    // Getters and Setters for new fields
+    public String getPrerrequisitos() {
+        return prerrequisitos;
+    }
+
+    public void setPrerrequisitos(String prerrequisitos) {
+        this.prerrequisitos = prerrequisitos;
+    }
+
+    public String getResultadosAprendizaje() {
+        return resultadosAprendizaje;
+    }
+
+    public void setResultadosAprendizaje(String resultadosAprendizaje) {
+        this.resultadosAprendizaje = resultadosAprendizaje;
+    }
+
+    public String getHabilidades() {
+        return habilidades;
+    }
+
+    public void setHabilidades(String habilidades) {
+        this.habilidades = habilidades;
+    }
+
+    public String getIdioma() {
+        return idioma;
+    }
+
+    public void setIdioma(String idioma) {
+        this.idioma = idioma;
+    }
+
+    public BigDecimal getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(BigDecimal precio) {
+        this.precio = precio;
+    }
+
+    public String getImagenPortada() {
+        return imagenPortada;
+    }
+
+    public void setImagenPortada(String imagenPortada) {
+        this.imagenPortada = imagenPortada;
+    }
+
+    public String getEtiquetas() {
+        return etiquetas;
+    }
+
+    public void setEtiquetas(String etiquetas) {
+        this.etiquetas = etiquetas;
     }
 }

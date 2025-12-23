@@ -12,10 +12,11 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "EduSearch - Entorno Virtual de Aprendizaje",
+  title: "HealthConnect - Plataforma Integral de Salud",
   description:
-    "Plataforma educativa completa para gestión de cursos, cuestionarios y comunicación entre estudiantes y profesores",
+    "Plataforma médica completa para gestión de programas de salud, seguimientos clínicos y comunicación entre profesionales y pacientes",
   generator: 'v0.app',
+  keywords: ['salud', 'medicina', 'pacientes', 'profesionales', 'seguimiento', 'prevención'],
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png'

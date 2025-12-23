@@ -76,8 +76,9 @@ public class Respuesta {
             case VERDADERO_FALSO:
                 return textoRespuesta != null && !textoRespuesta.trim().isEmpty();
             case COMPLETAR_TEXTO:
+            case RESPUESTA_CORTA:
                 return (valor != null && !valor.trim().isEmpty()) ||
-                       (textoRespuesta != null && !textoRespuesta.trim().isEmpty());
+                        (textoRespuesta != null && !textoRespuesta.trim().isEmpty());
             case ORDENAR_ELEMENTOS:
                 return textoRespuesta != null && orden != null;
             case ARRASTRAR_SOLTAR:

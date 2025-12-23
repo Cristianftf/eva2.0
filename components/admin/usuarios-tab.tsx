@@ -1,11 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
@@ -16,16 +15,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { usuariosService } from "@/lib/services/usuarios.service"
-import type { User } from "@/lib/types"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog"
+import { LoadingState, ErrorState, EmptyState } from "@/components/ui/data-states"
 import { Search, UserPlus, Edit, Trash2, Loader2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
+import type { User } from "@/lib/types"
 
 export function UsuariosTab() {
-  const [usuarios, setUsuarios] = useState<User[]>([])
-  const [filteredUsuarios, setFilteredUsuarios] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { usuarios, loading, error, crearUsuario, actualizarUsuario, eliminarUsuario, refetchUsuarios } = useAdminData()
+  const { confirm } = useConfirmationDialog()
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedRol, setSelectedRol] = useState<string>("TODOS")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -39,30 +40,10 @@ export function UsuariosTab() {
   })
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    loadUsuarios()
-  }, [])
+  // Filtrar usuarios usando useMemo para optimización
+  const filteredUsuarios = useMemo(() => {
+    if (!usuarios) return []
 
-  useEffect(() => {
-    filterUsuarios()
-  }, [searchTerm, selectedRol, usuarios])
-
-  const loadUsuarios = async () => {
-    setLoading(true)
-    setError(null)
-
-    const result = await usuariosService.getAll()
-
-    if (result.success && result.data) {
-      setUsuarios(result.data)
-    } else {
-      setError(result.error || "Error al cargar usuarios")
-    }
-
-    setLoading(false)
-  }
-
-  const filterUsuarios = () => {
     let filtered = usuarios
 
     if (searchTerm) {
@@ -78,18 +59,33 @@ export function UsuariosTab() {
       filtered = filtered.filter((u) => u.rol === selectedRol)
     }
 
-    setFilteredUsuarios(filtered)
-  }
+    return filtered
+  }, [usuarios, searchTerm, selectedRol])
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este usuario?")) return
+    const confirmed = await confirm("¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.")
+    if (!confirmed) return
 
-    const result = await usuariosService.delete(id)
-
-    if (result.success) {
-      setUsuarios(usuarios.filter((u) => u.id !== id))
-    } else {
-      alert(result.error || "Error al eliminar usuario")
+    try {
+      const result = await eliminarUsuario(id)
+      if (result.success) {
+        toast({
+          title: "Usuario eliminado",
+          description: "El usuario ha sido eliminado exitosamente.",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al eliminar el usuario",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo eliminar el usuario. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -97,17 +93,32 @@ export function UsuariosTab() {
     e.preventDefault()
     setSubmitting(true)
 
-    const result = await usuariosService.create({
-      ...formData,
-      activo: true,
-    })
+    try {
+      const result = await crearUsuario({
+        ...formData,
+        activo: true,
+      })
 
-    if (result.success && result.data) {
-      setUsuarios([...usuarios, result.data])
-      setDialogOpen(false)
-      resetForm()
-    } else {
-      alert(result.error || "Error al crear usuario")
+      if (result.success) {
+        toast({
+          title: "Usuario creado",
+          description: "El usuario ha sido creado exitosamente.",
+        })
+        setDialogOpen(false)
+        resetForm()
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al crear el usuario",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo crear el usuario. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
     }
 
     setSubmitting(false)
@@ -119,20 +130,35 @@ export function UsuariosTab() {
 
     setSubmitting(true)
 
-    const result = await usuariosService.update(editingUsuario.id, {
-      nombre: formData.nombre,
-      apellido: formData.apellido,
-      email: formData.email,
-      rol: formData.rol,
-    })
+    try {
+      const result = await actualizarUsuario(editingUsuario.id, {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        email: formData.email,
+        rol: formData.rol,
+      })
 
-    if (result.success && result.data) {
-      setUsuarios(usuarios.map(u => u.id === editingUsuario.id ? result.data! : u))
-      setDialogOpen(false)
-      setEditingUsuario(null)
-      resetForm()
-    } else {
-      alert(result.error || "Error al actualizar usuario")
+      if (result.success) {
+        toast({
+          title: "Usuario actualizado",
+          description: "Los datos del usuario han sido actualizados.",
+        })
+        setDialogOpen(false)
+        setEditingUsuario(null)
+        resetForm()
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al actualizar el usuario",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo actualizar el usuario. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
     }
 
     setSubmitting(false)
@@ -237,7 +263,7 @@ export function UsuariosTab() {
                     <Label htmlFor="rol">Rol</Label>
                     <Select
                       value={formData.rol}
-                      onValueChange={(value) => setFormData({ ...formData, rol: value as Usuario["rol"] })}
+                      onValueChange={(value) => setFormData({ ...formData, rol: value as User["rol"] })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona un rol" />
@@ -308,17 +334,17 @@ export function UsuariosTab() {
           </Select>
         </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        {error && <ErrorState error={error} onRetry={refetchUsuarios} />}
 
         {/* Table */}
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <LoadingState message="Cargando usuarios..." />
+        ) : filteredUsuarios.length === 0 ? (
+          <EmptyState
+            icon={UserPlus}
+            title="No se encontraron usuarios"
+            description={searchTerm || selectedRol !== "TODOS" ? "Intenta con otros filtros de búsqueda" : "No hay usuarios registrados en el sistema"}
+          />
         ) : (
           <div className="rounded-md border">
             <Table>
@@ -333,41 +359,33 @@ export function UsuariosTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsuarios.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No se encontraron usuarios
+                {filteredUsuarios.map((usuario) => (
+                  <TableRow key={usuario.id}>
+                    <TableCell className="font-medium">
+                      {usuario.nombre} {usuario.apellido}
+                    </TableCell>
+                    <TableCell>{usuario.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={getRolBadgeVariant(usuario.rol)}>{usuario.rol}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={usuario.activo ? "default" : "secondary"}>
+                        {usuario.activo ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(usuario.fechaRegistro).toLocaleDateString("es-ES")}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(usuario)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(usuario.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredUsuarios.map((usuario) => (
-                    <TableRow key={usuario.id}>
-                      <TableCell className="font-medium">
-                        {usuario.nombre} {usuario.apellido}
-                      </TableCell>
-                      <TableCell>{usuario.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={getRolBadgeVariant(usuario.rol)}>{usuario.rol}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={usuario.activo ? "default" : "secondary"}>
-                          {usuario.activo ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(usuario.fechaRegistro).toLocaleDateString("es-ES")}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(usuario)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(usuario.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </div>

@@ -84,7 +84,7 @@ class AuthServiceTest {
         user.setRol("ESTUDIANTE");
 
         when(userRepository.findFirstByEmailOrderByIdAsc("test@example.com")).thenReturn(Optional.of(user));
-        doNothing().when(authenticationManager).authenticate(any());
+        when(authenticationManager.authenticate(any())).thenReturn(null);
 
         // When
         User result = authService.login(loginDto);

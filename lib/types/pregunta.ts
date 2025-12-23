@@ -4,7 +4,8 @@ export enum TipoPregunta {
   VERDADERO_FALSO = 'verdadero_falso',
   ARRASTRAR_SOLTAR = 'arrastrar_soltar',
   COMPLETAR_TEXTO = 'completar_texto',
-  ORDENAR_ELEMENTOS = 'ordenar_elementos'
+  ORDENAR_ELEMENTOS = 'ordenar_elementos',
+  RESPUESTA_CORTA = 'respuesta_corta'
 }
 
 // Interfaz para respuestas simples (opción múltiple, verdadero/falso)
@@ -68,6 +69,18 @@ export interface EnviarCuestionarioData {
   respuestas: RespuestaEstudiante[]
 }
 
+// Interfaz para detalle de respuesta en revisión
+export interface DetalleRespuesta {
+  preguntaId: number
+  esCorrecta: boolean
+  respuestaEstudiante: any
+  respuestaCorrecta?: string
+  respuestaCorrectaId?: number
+  respuestasCorrectas?: string[]
+  ordenCorrecto?: string[]
+  asociacionesCorrectas?: Record<string, string>
+}
+
 // Interfaz para resultado de evaluación
 export interface ResultadoEvaluacion {
   calificacion: number
@@ -75,4 +88,5 @@ export interface ResultadoEvaluacion {
   respuestasCorrectas: number
   totalPreguntas: number
   detalles?: Record<number, boolean> // preguntaId -> esCorrecta
+  detallesRespuestas?: DetalleRespuesta[]
 }

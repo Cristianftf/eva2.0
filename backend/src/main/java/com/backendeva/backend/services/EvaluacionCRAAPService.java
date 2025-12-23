@@ -16,7 +16,7 @@ import java.util.Optional;
  * Servicio para manejo de evaluaciones CRAAP (Currency, Relevance, Authority, Accuracy, Purpose)
  */
 @Service
-@Transactional
+@Transactional 
 public class EvaluacionCRAAPService {
     
     @Autowired

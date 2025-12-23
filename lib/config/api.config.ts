@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     me: "/auth/me",
     changePassword: "/auth/cambiar-password",
     uploadPhoto: "/auth/subir-foto",
+    health: "/auth/health",
   },
 
   // Usuarios
@@ -36,6 +37,7 @@ export const API_ENDPOINTS = {
     inscribir: (cursoId: string) => `/cursos/${cursoId}/inscribir`,
     desinscribir: (cursoId: string) => `/cursos/${cursoId}/desinscribir`,
     inscripcionesByEstudiante: (estudianteId: string) => `/cursos/inscripciones/estudiante/${estudianteId}`,
+    disponiblesByEstudiante: (estudianteId: string) => `/cursos/disponibles/estudiante/${estudianteId}`,
     aprobarInscripcion: (inscripcionId: string) => `/cursos/aprobar-inscripcion/${inscripcionId}`,
     rechazarInscripcion: (inscripcionId: string) => `/cursos/rechazar-inscripcion/${inscripcionId}`,
   },

@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { CheckCircle2, AlertCircle } from "lucide-react"
-import type { PreguntaData, TipoPregunta, RespuestaEstudiante } from "@/lib/types/pregunta"
+import type { PreguntaData, RespuestaEstudiante } from "@/lib/types/pregunta"
+import { TipoPregunta } from "@/lib/types/pregunta"
 import { VerdaderoFalsoPregunta } from "./verdadero-falso-pregunta"
 import { CompletarTextoPregunta } from "./completar-texto-pregunta"
 import { OrdenarElementosPregunta } from "./ordenar-elementos-pregunta"
@@ -16,6 +17,7 @@ interface PreguntaFactoryProps {
   onRespuestaSeleccionada: (respuesta: RespuestaEstudiante) => void
   mostrarRespuesta?: boolean
   readonly?: boolean
+  respuestaCorrecta?: any
 }
 
 export function PreguntaFactory({
@@ -74,6 +76,7 @@ export function PreguntaFactory({
                 onValueChange={(value) => manejarRespuestaNumerica(pregunta.id, parseInt(value))}
                 disabled={readonly}
                 className="space-y-3"
+                aria-label={`Opciones para la pregunta: ${pregunta.texto}`}
               >
                 <div className="space-y-3">
                   {pregunta.opciones?.map((opcion) => {
@@ -141,6 +144,7 @@ export function PreguntaFactory({
       )
 
     case TipoPregunta.COMPLETAR_TEXTO:
+    case TipoPregunta.RESPUESTA_CORTA:
       return (
         <CompletarTextoPregunta
           preguntaId={pregunta.id}

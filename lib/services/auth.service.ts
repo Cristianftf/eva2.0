@@ -73,11 +73,15 @@ class AuthService {
     const formData = new FormData()
     formData.append("foto", file)
 
-    const response = await apiService.uploadFile<User>(API_ENDPOINTS.auth.uploadPhoto, formData)
+    const response = await apiService.post<User>(API_ENDPOINTS.auth.uploadPhoto, formData)
     if (!response.success || !response.data) {
       throw new Error(response.error || "Error al subir foto")
     }
     return response.data
+  }
+
+  async health(): Promise<ApiResponse<{ status: string; timestamp: string; service: string }>> {
+    return apiService.get<{ status: string; timestamp: string; service: string }>(API_ENDPOINTS.auth.health)
   }
 }
 

@@ -56,6 +56,10 @@ class CoursesService {
     return apiService.get<Inscripcion[]>(API_ENDPOINTS.courses.inscripcionesByEstudiante(estudianteId))
   }
 
+  async getCursosDisponiblesByEstudiante(estudianteId: string): Promise<ApiResponse<Curso[]>> {
+    return apiService.get<Curso[]>(API_ENDPOINTS.courses.disponiblesByEstudiante(estudianteId))
+  }
+
   async unenrollCourse(cursoId: string): Promise<ApiResponse<void>> {
     return apiService.post<void>(API_ENDPOINTS.courses.desinscribir(cursoId))
   }
