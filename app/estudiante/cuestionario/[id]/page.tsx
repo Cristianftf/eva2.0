@@ -90,7 +90,7 @@ export default function TomarCuestionarioPage() {
 
   const enviarCuestionario = async () => {
     // Validar que todas las preguntas tengan respuesta
-    const preguntasSinRespuesta = preguntas.filter(p => !respuestas[p.id])
+    const preguntasSinRespuesta = preguntas.filter(p => !respuestas[Number(p.id)])
     if (preguntasSinRespuesta.length > 0) {
       toast({
         title: "Preguntas sin responder",
@@ -137,6 +137,43 @@ export default function TomarCuestionarioPage() {
       setEnviando(false)
     }
   }
+  
+  const guardarProgreso = async () => {
+    setEnviando(true)
+    try {
+      const respuestasArray = Object.values(respuestas)
+      
+      // Verificar que al menos una respuesta sea válida
+      const respuestasValidas = respuestasArray.filter(r => r.respuesta !== null && r.respuesta !== undefined)
+      if (respuestasValidas.length === 0) {
+        toast({
+          title: "No hay respuestas para guardar",
+          description: "Por favor, responde al menos una pregunta antes de guardar el progreso.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const resultado = await cuestionariosService.guardarProgreso(
+        Number(params.id),
+        respuestasArray
+      )
+
+      toast({
+        title: "Progreso guardado exitosamente",
+        description: `Calificación parcial: ${resultado.calificacion}%`,
+      })
+    } catch (error: any) {
+      console.error("Error al guardar progreso:", error)
+      toast({
+        title: "Error al guardar progreso",
+        description: error.message || "Ocurrió un error inesperado. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   const formatearTiempo = (segundos: number) => {
     const minutos = Math.floor(segundos / 60)
@@ -171,7 +208,7 @@ export default function TomarCuestionarioPage() {
   const pregunta = preguntas[preguntaActual]
   const progreso = ((preguntaActual + 1) / preguntas.length) * 100
   const respuestasCompletadas = Object.keys(respuestas).length
-  const respuestaActual = respuestas[pregunta.id]
+  const respuestaActual = respuestas[Number(pregunta.id)]
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -233,16 +270,28 @@ export default function TomarCuestionarioPage() {
             {preguntaActual < preguntas.length - 1 ? (
               <Button onClick={siguientePregunta}>Siguiente</Button>
             ) : (
-              <Button onClick={enviarCuestionario} disabled={enviando || respuestasCompletadas < preguntas.length}>
-                {enviando ? (
-                  <>
-                    <Spinner className="mr-2 h-4 w-4" />
-                    Enviando...
-                  </>
-                ) : (
-                  "Enviar Cuestionario"
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={guardarProgreso} disabled={enviando} variant="outline">
+                  {enviando ? (
+                    <>
+                      <Spinner className="mr-2 h-4 w-4" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar Progreso"
+                  )}
+                </Button>
+                <Button onClick={enviarCuestionario} disabled={enviando || respuestasCompletadas < preguntas.length}>
+                  {enviando ? (
+                    <>
+                      <Spinner className="mr-2 h-4 w-4" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar Cuestionario"
+                  )}
+                </Button>
+              </div>
             )}
           </CardFooter>
         </>
@@ -252,7 +301,7 @@ export default function TomarCuestionarioPage() {
         {preguntas.map((p, index) => (
           <Button
             key={p.id}
-            variant={index === preguntaActual ? "default" : respuestas[p.id] ? "secondary" : "outline"}
+            variant={index === preguntaActual ? "default" : respuestas[Number(p.id)] ? "secondary" : "outline"}
             size="sm"
             onClick={() => setPreguntaActual(index)}
             className="aspect-square"

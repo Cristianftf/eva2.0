@@ -14,12 +14,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { usuariosService } from "@/lib/services/usuarios.service"
 import type { User } from "@/lib/types"
-import { Search, UserPlus, Edit, Trash2, Loader2 } from "lucide-react"
+import { Search, UserPlus, Edit, Trash2, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 
 export function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<User[]>([])
@@ -29,6 +42,10 @@ export function UsuariosTab() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedRol, setSelectedRol] = useState<string>("TODOS")
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
+  const [usuarioToDelete, setUsuarioToDelete] = useState<User | null>(null)
+  const [usuarioToTransfer, setUsuarioToTransfer] = useState<User | null>(null)
   const [editingUsuario, setEditingUsuario] = useState<User | null>(null)
   const [formData, setFormData] = useState({
     email: "",
@@ -38,6 +55,12 @@ export function UsuariosTab() {
     password: "",
   })
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [transferring, setTransferring] = useState(false)
+  const [selectedNewProfesor, setSelectedNewProfesor] = useState<string>("")
+  const [cursosAsociadosInfo, setCursosAsociadosInfo] = useState<any>(null)
+  const [loadingCursosInfo, setLoadingCursosInfo] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     loadUsuarios()
@@ -81,15 +104,110 @@ export function UsuariosTab() {
     setFilteredUsuarios(filtered)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este usuario?")) return
+  const handleDeleteClick = async (usuario: User) => {
+    setUsuarioToDelete(usuario)
+    setDeleteDialogOpen(true)
+    
+    // Cargar información de cursos asociados
+    setLoadingCursosInfo(true)
+    try {
+      const info = await usuariosService.getCursosAsociados(String(usuario.id))
+      if (info.success && info.data) {
+        setCursosAsociadosInfo(info.data)
+      }
+    } catch (error) {
+      console.error("Error al cargar cursos asociados:", error)
+    } finally {
+      setLoadingCursosInfo(false)
+    }
+  }
 
-    const result = await usuariosService.delete(id)
+  const handleDeleteConfirm = async () => {
+    if (!usuarioToDelete) return
 
-    if (result.success) {
-      setUsuarios(usuarios.filter((u) => u.id !== id))
-    } else {
-      alert(result.error || "Error al eliminar usuario")
+    setDeleting(true)
+    try {
+      const result = await usuariosService.delete(String(usuarioToDelete.id))
+
+      if (result.success) {
+        setUsuarios(usuarios.filter((u) => u.id !== usuarioToDelete.id))
+        toast({
+          title: "Usuario eliminado",
+          description: "El usuario ha sido marcado como inactivo correctamente.",
+          variant: "default",
+        })
+        setDeleteDialogOpen(false)
+        setUsuarioToDelete(null)
+        setCursosAsociadosInfo(null)
+      } else {
+        // Manejar respuesta de error detallada del backend
+        const errorData = result.data as any
+        if (errorData?.error && errorData?.cursosAsociados > 0) {
+          // Usuario tiene cursos - mostrar opción de transferencia
+          toast({
+            title: "No se puede eliminar",
+            description: errorData.error,
+            variant: "destructive",
+          })
+          setDeleteDialogOpen(false)
+          // Abrir diálogo de transferencia
+          setUsuarioToTransfer(usuarioToDelete)
+          setTransferDialogOpen(true)
+        } else {
+          toast({
+            title: "Error al eliminar",
+            description: errorData?.error || result.error || "Error desconocido",
+            variant: "destructive",
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleTransferCursos = async () => {
+    if (!usuarioToTransfer || !selectedNewProfesor) return
+
+    setTransferring(true)
+    try {
+      const result = await usuariosService.transferirCursos({
+        profesorActualId: String(usuarioToTransfer.id),
+        nuevoProfesorId: selectedNewProfesor
+      })
+
+      if (result.success) {
+        toast({
+          title: "Cursos transferidos",
+          description: "Los cursos han sido transferidos exitosamente al nuevo profesor.",
+          variant: "default",
+        })
+        setTransferDialogOpen(false)
+        setUsuarioToTransfer(null)
+        setSelectedNewProfesor("")
+        // Recargar usuarios para actualizar la información
+        loadUsuarios()
+      } else {
+        toast({
+          title: "Error al transferir",
+          description: result.error || "No se pudieron transferir los cursos",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
+        variant: "destructive",
+      })
+    } finally {
+      setTransferring(false)
     }
   }
 
@@ -106,8 +224,17 @@ export function UsuariosTab() {
       setUsuarios([...usuarios, result.data])
       setDialogOpen(false)
       resetForm()
+      toast({
+        title: "Usuario creado",
+        description: "El nuevo usuario ha sido creado exitosamente.",
+        variant: "default",
+      })
     } else {
-      alert(result.error || "Error al crear usuario")
+      toast({
+        title: "Error al crear usuario",
+        description: result.error || "Error al crear el usuario",
+        variant: "destructive",
+      })
     }
 
     setSubmitting(false)
@@ -119,7 +246,7 @@ export function UsuariosTab() {
 
     setSubmitting(true)
 
-    const result = await usuariosService.update(editingUsuario.id, {
+    const result = await usuariosService.update(String(editingUsuario.id), {
       nombre: formData.nombre,
       apellido: formData.apellido,
       email: formData.email,
@@ -131,8 +258,17 @@ export function UsuariosTab() {
       setDialogOpen(false)
       setEditingUsuario(null)
       resetForm()
+      toast({
+        title: "Usuario actualizado",
+        description: "Los datos del usuario han sido actualizados correctamente.",
+        variant: "default",
+      })
     } else {
-      alert(result.error || "Error al actualizar usuario")
+      toast({
+        title: "Error al actualizar",
+        description: result.error || "Error al actualizar el usuario",
+        variant: "destructive",
+      })
     }
 
     setSubmitting(false)
@@ -177,6 +313,11 @@ export function UsuariosTab() {
       default:
         return "outline"
     }
+  }
+
+  const getProfesoresDisponibles = () => {
+    return usuarios.filter(u => u.rol === "PROFESOR" && 
+      (!usuarioToTransfer || u.id !== usuarioToTransfer.id))
   }
 
   return (
@@ -237,7 +378,7 @@ export function UsuariosTab() {
                     <Label htmlFor="rol">Rol</Label>
                     <Select
                       value={formData.rol}
-                      onValueChange={(value) => setFormData({ ...formData, rol: value as Usuario["rol"] })}
+                      onValueChange={(value) => setFormData({ ...formData, rol: value as User["rol"] })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona un rol" />
@@ -360,9 +501,34 @@ export function UsuariosTab() {
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(usuario)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(usuario.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(usuario)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción marcará al usuario como inactivo. Los datos se conservarán pero no podrá acceder al sistema.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteConfirm} disabled={deleting}>
+                                  {deleting ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Eliminando...
+                                    </>
+                                  ) : (
+                                    "Eliminar"
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -372,6 +538,71 @@ export function UsuariosTab() {
             </Table>
           </div>
         )}
+
+        {/* Diálogo de transferencia de cursos */}
+        <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Transferir Cursos</DialogTitle>
+              <DialogDescription>
+                {usuarioToTransfer && 
+                  `${usuarioToTransfer.nombre} ${usuarioToTransfer.apellido} tiene cursos asociados. ` +
+                  "Selecciona un nuevo profesor para transferir los cursos antes de eliminarlo."
+                }
+              </DialogDescription>
+            </DialogHeader>
+            
+            {cursosAsociadosInfo && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    El usuario tiene {cursosAsociadosInfo.cursosAsociados} curso(s) asociado(s).
+                    Debes transferir los cursos antes de poder eliminarlo.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-2">
+                  <Label>Seleccionar nuevo profesor</Label>
+                  <Select value={selectedNewProfesor} onValueChange={setSelectedNewProfesor}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un profesor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getProfesoresDisponibles().map((profesor) => (
+                        <SelectItem key={profesor.id} value={String(profesor.id)}>
+                          {profesor.nombre} {profesor.apellido} ({profesor.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleTransferCursos} 
+                disabled={!selectedNewProfesor || transferring}
+              >
+                {transferring ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Transfiriendo...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Transferir Cursos
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )

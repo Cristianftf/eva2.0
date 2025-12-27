@@ -1,0 +1,14 @@
+* es necesario internet para la activación de windows HWID y para la opción "online KMS" *
+
+1-Abre PowerShell (NO CMD).
+
+2-Copia y pega el código a continuación y presione Enter
+	irm https://get.activated.win | iex
+
+3-Verás las opciones de activación. Elija [1] HWID para la activación de Windows. Elija [2] Ohook para la activación de Office.
+
+**Código Alternativo:
+	irm https://massgrave.dev/get | iex
+
+
+enlace de la web: https://massgrave.dev/

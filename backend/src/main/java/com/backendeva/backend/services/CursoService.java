@@ -51,4 +51,23 @@ public class CursoService {
     public List<Curso> getByProfesor(Long idProfesor) {
         return cursoRepository.findByProfesorId(idProfesor);
     }
+    
+    /**
+     * Alias para getByProfesor - encuentra cursos por ID del profesor
+     * @param profesorId ID del profesor
+     * @return Lista de cursos del profesor
+     */
+    public List<Curso> findByProfesorId(Long profesorId) {
+        return getByProfesor(profesorId);
+    }
+    
+    /**
+     * Guarda múltiples cursos
+     * @param cursos Lista de cursos a guardar
+     * @return Lista de cursos guardados
+     */
+    @SuppressWarnings("null")
+    public List<Curso> saveAll(List<Curso> cursos) {
+        return cursoRepository.saveAll(cursos);
+    }
 }

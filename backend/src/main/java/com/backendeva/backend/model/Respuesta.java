@@ -74,6 +74,7 @@ public class Respuesta {
         switch (tipoPregunta) {
             case OPCION_MULTIPLE:
             case VERDADERO_FALSO:
+            case SELECCION_MULTIPLE:
                 return textoRespuesta != null && !textoRespuesta.trim().isEmpty();
             case COMPLETAR_TEXTO:
                 return (valor != null && !valor.trim().isEmpty()) ||
@@ -81,6 +82,7 @@ public class Respuesta {
             case ORDENAR_ELEMENTOS:
                 return textoRespuesta != null && orden != null;
             case ARRASTRAR_SOLTAR:
+            case ASOCIACION:
                 return textoRespuesta != null && grupo != null;
             default:
                 return false;

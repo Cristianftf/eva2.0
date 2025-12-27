@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { temasService, type CreateTemaDto } from "@/lib/services/temas.service"
 import { multimediaService } from "@/lib/services/multimedia.service"
+import { buildMediaUrl } from "@/lib/utils/media-urls"
 import type { Tema, MultimediaItem } from "@/lib/types"
 import { Plus, Edit, Trash2, GripVertical, Upload, FileText, Image, Video, Music } from "lucide-react"
 
@@ -61,7 +62,7 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
         for (const tema of result.data) {
           const multimediaResult = await multimediaService.getByTema(tema.id)
           if (multimediaResult.success && multimediaResult.data) {
-            multimediaData[tema.id] = multimediaResult.data
+            multimediaData[tema.id.toString()] = multimediaResult.data
           }
         }
         setMultimedia(multimediaData)
@@ -101,14 +102,14 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | number) => {
     if (!confirm("¿Eliminar este tema?")) return
 
     try {
       const result = await temasService.delete(id)
 
       if (result.success) {
-        setTemas(temas.filter((t) => t.id !== id))
+        setTemas(temas.filter((t) => t.id.toString() !== id.toString()))
       } else {
         alert(result.error || "Error al eliminar tema")
       }
@@ -142,7 +143,7 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
       })
 
       if (result.success && result.data) {
-        setTemas(temas.map((t) => (t.id === selectedTema.id ? result.data! : t)))
+        setTemas(temas.map((t) => (t.id.toString() === selectedTema.id.toString() ? result.data! : t)))
         setEditDialogOpen(false)
         setSelectedTema(null)
         setFormData({ titulo: "", descripcion: "" })
@@ -188,7 +189,7 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
       if (result.success && result.data) {
         setMultimedia({
           ...multimedia,
-          [selectedTema.id]: [...(multimedia[selectedTema.id] || []), result.data],
+          [selectedTema.id.toString()]: [...(multimedia[selectedTema.id.toString()] || []), result.data],
         })
         setUploadDialogOpen(false)
         setSelectedTema(null)
@@ -413,14 +414,14 @@ export function ContenidoCursoTab({ cursoId }: ContenidoCursoTabProps) {
                         </div>
 
                         {/* Mostrar multimedia del tema */}
-                        {multimedia[tema.id] && multimedia[tema.id].length > 0 && (
+                        {multimedia[tema.id.toString()] && multimedia[tema.id.toString()].length > 0 && (
                           <div className="mt-3 space-y-2">
                             <h5 className="text-sm font-medium">Archivos multimedia:</h5>
                             <div className="space-y-1">
-                              {multimedia[tema.id].map((item) => (
+                              {multimedia[tema.id.toString()].map((item) => (
                                 <div key={item.id} className="flex items-center gap-2 text-sm text-muted-foreground">
                                   {getMultimediaIcon(item.tipo || 'documento')}
-                                  <span>{item.url || 'Archivo multimedia'}</span>
+                                  <span>{item.nombreArchivo || 'Archivo multimedia'}</span>
                                 </div>
                               ))}
                             </div>

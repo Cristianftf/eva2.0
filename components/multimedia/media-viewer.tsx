@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Video, Music, Image, ExternalLink, Download, AlertCircle } from "lucide-react"
 import type { MultimediaItem } from "@/lib/types"
+import { buildMediaUrl, getMediaMimeType } from "@/lib/utils/media-urls"
 
 interface MediaViewerProps {
   media: MultimediaItem
@@ -58,9 +59,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                 preload="metadata"
                 onError={() => setError("Error al cargar el video")}
               >
-                <source src={media.url} type="video/mp4" />
-                <source src={media.url} type="video/webm" />
-                <source src={media.url} type="video/ogg" />
+                <source src={buildMediaUrl(media.url)} type={getMediaMimeType(media.url)} />
                 Tu navegador no soporta la reproducción de video.
               </video>
             </div>
@@ -74,9 +73,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                 className="w-full"
                 onError={() => setError("Error al cargar el audio")}
               >
-                <source src={media.url} type="audio/mp3" />
-                <source src={media.url} type="audio/wav" />
-                <source src={media.url} type="audio/ogg" />
+                <source src={buildMediaUrl(media.url)} type={getMediaMimeType(media.url)} />
                 Tu navegador no soporta la reproducción de audio.
               </audio>
             </div>
@@ -86,8 +83,8 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
           return (
             <div className="bg-gray-50 p-4 rounded-lg">
               <img
-                src={media.url}
-                alt={media.titulo}
+                src={buildMediaUrl(media.url)}
+                alt={media.titulo || 'Archivo multimedia'}
                 className="max-w-full h-auto rounded-lg shadow-md"
                 onError={() => setError("Error al cargar la imagen")}
               />
@@ -96,7 +93,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
 
         case "documento":
           // Para documentos, mostrar un iframe si es posible, o un enlace de descarga
-          if (media.url.includes('.pdf') || media.url.includes('.doc') || media.url.includes('.txt')) {
+          if (media.url && (media.url.includes('.pdf') || media.url.includes('.doc') || media.url.includes('.txt'))) {
             return (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="text-center">
@@ -106,13 +103,13 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   </p>
                   <div className="flex gap-2 justify-center">
                     <Button asChild variant="outline" size="sm">
-                      <a href={media.url} target="_blank" rel="noopener noreferrer">
+                      <a href={buildMediaUrl(media.url)} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="mr-2 h-4 w-4" />
                         Ver en nueva pestaña
                       </a>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                      <a href={media.url} download>
+                      <a href={buildMediaUrl(media.url)} download>
                         <Download className="mr-2 h-4 w-4" />
                         Descargar
                       </a>
@@ -132,7 +129,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   Archivo disponible para descarga
                 </p>
                 <Button asChild variant="outline">
-                  <a href={media.url} download>
+                  <a href={buildMediaUrl(media.url)} download>
                     <Download className="mr-2 h-4 w-4" />
                     Descargar archivo
                   </a>
@@ -150,7 +147,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
                   Contenido multimedia no soportado directamente
                 </p>
                 <Button asChild variant="outline">
-                  <a href={media.url} target="_blank" rel="noopener noreferrer">
+                  <a href={buildMediaUrl(media.url)} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Abrir enlace externo
                   </a>
@@ -171,7 +168,7 @@ export function MediaViewer({ media, className }: MediaViewerProps) {
         <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
             {getIcon()}
-            <CardTitle className="text-lg">{media.url || 'Archivo multimedia'}</CardTitle>
+            <CardTitle className="text-lg">{media.nombreArchivo || 'Archivo multimedia'}</CardTitle>
           </div>
           <Badge className={getTypeColor()}>
             {media.tipo.charAt(0).toUpperCase() + media.tipo.slice(1)}

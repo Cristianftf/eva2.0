@@ -7,7 +7,7 @@ export interface CreateTemaDto {
   titulo: string
   descripcion: string
   orden: number
-  cursoId: string
+  cursoId: string | number
 }
 
 class TemasService {
@@ -17,13 +17,13 @@ class TemasService {
   }
 
   // Obtener tema por ID
-  async getById(id: string): Promise<ApiResponse<Tema>> {
-    return apiService.get<Tema>(API_ENDPOINTS.topics.byId(id))
+  async getById(id: string | number): Promise<ApiResponse<Tema>> {
+    return apiService.get<Tema>(API_ENDPOINTS.topics.byId(id.toString()))
   }
 
   // Obtener temas por curso
-  async getByCurso(cursoId: string): Promise<ApiResponse<Tema[]>> {
-    return apiService.get<Tema[]>(API_ENDPOINTS.topics.byCurso(cursoId))
+  async getByCurso(cursoId: string | number): Promise<ApiResponse<Tema[]>> {
+    return apiService.get<Tema[]>(API_ENDPOINTS.topics.byCurso(cursoId.toString()))
   }
 
   // Crear nuevo tema con cursoId
@@ -32,13 +32,13 @@ class TemasService {
   }
 
   // Actualizar tema
-  async update(id: string, data: Partial<Tema>): Promise<ApiResponse<Tema>> {
-    return apiService.put<Tema>(API_ENDPOINTS.topics.byId(id), data)
+  async update(id: string | number, data: Partial<Tema>): Promise<ApiResponse<Tema>> {
+    return apiService.put<Tema>(API_ENDPOINTS.topics.byId(id.toString()), data)
   }
 
   // Eliminar tema
-  async delete(id: string): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.topics.byId(id))
+  async delete(id: string | number): Promise<ApiResponse<void>> {
+    return apiService.delete<void>(API_ENDPOINTS.topics.byId(id.toString()))
   }
 }
 

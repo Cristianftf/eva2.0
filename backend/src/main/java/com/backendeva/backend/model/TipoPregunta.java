@@ -29,7 +29,17 @@ public enum TipoPregunta {
     /**
      * Pregunta de ordenar elementos - el estudiante ordena una lista de elementos
      */
-    ORDENAR_ELEMENTOS("ordenar_elementos", "Ordenar Elementos");
+    ORDENAR_ELEMENTOS("ordenar_elementos", "Ordenar Elementos"),
+    
+    /**
+     * Pregunta de selección múltiple con múltiples respuestas correctas - el estudiante selecciona varias opciones
+     */
+    SELECCION_MULTIPLE("seleccion_multiple", "Selección Múltiple"),
+    
+    /**
+     * Pregunta de asociación - el estudiante asocia elementos
+     */
+    ASOCIACION("asociacion", "Asociación");
     
     private final String codigo;
     private final String descripcion;

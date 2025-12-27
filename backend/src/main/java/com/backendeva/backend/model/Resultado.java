@@ -26,4 +26,7 @@ public class Resultado {
 
     @Column(name = "fecha_completado")
     private java.time.LocalDateTime fechaCompletado = java.time.LocalDateTime.now();
+
+    @Column(name = "completado")
+    private Boolean completado = false;
 }

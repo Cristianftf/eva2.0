@@ -60,11 +60,13 @@ public class Pregunta {
         switch (tipoPregunta) {
             case OPCION_MULTIPLE:
             case VERDADERO_FALSO:
+            case SELECCION_MULTIPLE:
                 return respuestas != null && respuestas.size() >= 2;
             case COMPLETAR_TEXTO:
                 return true; // Las preguntas de texto pueden tener 0 o más respuestas de referencia
             case ARRASTRAR_SOLTAR:
             case ORDENAR_ELEMENTOS:
+            case ASOCIACION:
                 return configuracionAdicional != null && !configuracionAdicional.trim().isEmpty();
             default:
                 return false;

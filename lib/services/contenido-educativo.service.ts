@@ -6,6 +6,9 @@ import type {
   TipoContenido
 } from '@/lib/types/contenido-educativo'
 
+// Re-exportar TipoContenido para uso directo
+export type { TipoContenido } from '@/lib/types/contenido-educativo'
+
 class ContenidoEducativoService {
   private readonly baseUrl = '/contenido-educativo'
 

@@ -98,6 +98,22 @@ class CuestionariosService {
     }
     return response.data
   }
+  
+  // Método para guardar el progreso del cuestionario
+  async guardarProgreso(
+    cuestionarioId: number,
+    respuestas: RespuestaEstudiante[],
+  ): Promise<{ calificacion: number; aprobado: boolean }> {
+    const payload: EnviarCuestionarioData = { respuestas }
+    const response = await apiService.post<{ calificacion: number; aprobado: boolean }>(
+      `${API_ENDPOINTS.quizzes.base}/${cuestionarioId}/guardar-progreso`,
+      payload,
+    )
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Error al guardar progreso")
+    }
+    return response.data
+  }
 
   // Método para validar una pregunta antes de crearla
   async validarPregunta(pregunta: Partial<PreguntaData>): Promise<{ valida: boolean; errores: string[] }> {

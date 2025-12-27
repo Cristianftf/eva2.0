@@ -12,6 +12,7 @@ import { estadisticasService } from "@/lib/services/estadisticas.service"
 import { MisCursosTab } from "@/components/estudiante/mis-cursos-tab"
 import { CursosDisponiblesTab } from "@/components/estudiante/cursos-disponibles-tab"
 import { MisCalificacionesTab } from "@/components/estudiante/mis-calificaciones-tab"
+import { RecursosSaludTab } from "@/components/estudiante/recursos-salud-tab"
 import { BookOpen, Award, TrendingUp, Clock } from "lucide-react"
 
 export default function EstudianteDashboardPage() {
@@ -21,6 +22,7 @@ export default function EstudianteDashboardPage() {
     cursosCompletados: 0,
     progresoPromedio: 0,
     horasEstudio: 0,
+    competenciasSalud: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -36,8 +38,8 @@ export default function EstudianteDashboardPage() {
     setLoading(true)
 
     const [inscripcionesResult, statsResult] = await Promise.all([
-      inscripcionesService.getByEstudiante(user.id),
-      estadisticasService.getEstudiante(user.id),
+      inscripcionesService.getByEstudiante(typeof user.id === 'string' ? user.id : String(user.id)),
+      estadisticasService.getEstudiante(typeof user.id === 'string' ? user.id : String(user.id)),
     ])
 
     if (inscripcionesResult.success && inscripcionesResult.data) {
@@ -50,6 +52,7 @@ export default function EstudianteDashboardPage() {
         cursosCompletados: completados,
         progresoPromedio: Math.round(promedioProgreso),
         horasEstudio: 0,
+        competenciasSalud: 0,
       })
     }
 
@@ -57,6 +60,7 @@ export default function EstudianteDashboardPage() {
       setStats((prev) => ({
         ...prev,
         horasEstudio: statsResult.data.horasEstudio || 0,
+        competenciasSalud: statsResult.data.competenciasSalud || 0,
       }))
     }
 
@@ -82,7 +86,7 @@ export default function EstudianteDashboardPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold mb-2">Mi Panel de Estudiante</h1>
-          <p className="text-muted-foreground">Bienvenido, {user.nombre}. Aquí puedes ver tus cursos y progreso</p>
+          <p className="text-muted-foreground">Bienvenido, {user.nombre}. Aquí puedes ver tus cursos y progreso en competencias informacionales en salud</p>
         </div>
 
         {/* Stats Cards */}
@@ -130,6 +134,17 @@ export default function EstudianteDashboardPage() {
               <p className="text-xs text-muted-foreground">Tiempo estimado</p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Competencias en Salud</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.competenciasSalud}%</div>
+              <p className="text-xs text-muted-foreground">Progreso en competencias informacionales en salud</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
@@ -138,6 +153,7 @@ export default function EstudianteDashboardPage() {
             <TabsTrigger value="mis-cursos">Mis Cursos</TabsTrigger>
             <TabsTrigger value="disponibles">Cursos Disponibles</TabsTrigger>
             <TabsTrigger value="calificaciones">Mis Calificaciones</TabsTrigger>
+            <TabsTrigger value="recursos-salud">Recursos de Salud</TabsTrigger>
           </TabsList>
 
           <TabsContent value="mis-cursos" className="space-y-4">
@@ -150,6 +166,10 @@ export default function EstudianteDashboardPage() {
 
           <TabsContent value="calificaciones" className="space-y-4">
             <MisCalificacionesTab />
+          </TabsContent>
+
+          <TabsContent value="recursos-salud" className="space-y-4">
+            <RecursosSaludTab />
           </TabsContent>
         </Tabs>
       </div>

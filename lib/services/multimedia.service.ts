@@ -9,26 +9,26 @@ class MultimediaService {
   }
 
   // Obtener multimedia por ID
-  async getById(id: string): Promise<ApiResponse<MultimediaItem>> {
-    return apiService.get<MultimediaItem>(API_ENDPOINTS.multimedia.byId(id))
+  async getById(id: string | number): Promise<ApiResponse<MultimediaItem>> {
+    return apiService.get<MultimediaItem>(API_ENDPOINTS.multimedia.byId(id.toString()))
   }
 
   // Obtener multimedia por tema
-  async getByTema(temaId: string): Promise<ApiResponse<MultimediaItem[]>> {
-    return apiService.get<MultimediaItem[]>(API_ENDPOINTS.multimedia.byTema(temaId))
+  async getByTema(temaId: string | number): Promise<ApiResponse<MultimediaItem[]>> {
+    return apiService.get<MultimediaItem[]>(API_ENDPOINTS.multimedia.byTema(temaId.toString()))
   }
 
   // Subir archivo multimedia
-  async upload(file: File, temaId: string, tipo?: string): Promise<ApiResponse<MultimediaItem>> {
+  async upload(file: File, temaId: string | number, tipo?: string): Promise<ApiResponse<MultimediaItem>> {
     return apiService.uploadFile<MultimediaItem>(API_ENDPOINTS.multimedia.upload, file, {
-      temaId,
+      temaId: temaId.toString(),
       ...(tipo && { tipo }),
     })
   }
 
   // Eliminar multimedia
-  async delete(id: string): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.multimedia.byId(id))
+  async delete(id: string | number): Promise<ApiResponse<void>> {
+    return apiService.delete<void>(API_ENDPOINTS.multimedia.byId(id.toString()))
   }
 }
 

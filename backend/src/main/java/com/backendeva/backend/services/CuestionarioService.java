@@ -2,7 +2,7 @@ package com.backendeva.backend.services;
 
 import com.backendeva.backend.dto.EnviarCuestionarioDto;
 import com.backendeva.backend.dto.RespuestaEstudianteDto;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.backendeva.backend.dto.CreateCuestionarioDto;
 import com.backendeva.backend.model.*;
 import com.backendeva.backend.repository.CuestionarioRepository;
 import com.backendeva.backend.repository.ResultadoRepository;
@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,91 @@ public class CuestionarioService {
     public Cuestionario create(Cuestionario cuestionario) {
         // Lógica adicional si es necesario
         return cuestionarioRepository.save(cuestionario);
+    }
+    
+    /**
+     * ✅ NUEVO: Crear cuestionario desde DTO con validaciones
+     * @param cuestionarioDto DTO con datos del cuestionario
+     * @return Cuestionario creado
+     * @throws RuntimeException si los datos son inválidos
+     */
+    @Transactional
+    public Cuestionario createFromDto(CreateCuestionarioDto cuestionarioDto) {
+        if (!cuestionarioDto.isValid()) {
+            throw new RuntimeException("Datos inválidos: " + cuestionarioDto.getValidationErrors());
+        }
+         
+        // Buscar y validar el curso
+        Curso curso = cursoService.findById(cuestionarioDto.getCursoId())
+                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + cuestionarioDto.getCursoId()));
+         
+        // Crear nuevo cuestionario
+        Cuestionario cuestionario = new Cuestionario();
+        cuestionario.setTitulo(cuestionarioDto.getTitulo());
+        cuestionario.setDescripcion(cuestionarioDto.getDescripcion());
+        cuestionario.setActivo(cuestionarioDto.getActivo() != null ? cuestionarioDto.getActivo() : true);
+        cuestionario.setDuracionMinutos(cuestionarioDto.getDuracionMinutos());
+        cuestionario.setQtiPayload(cuestionarioDto.getQtiPayload());
+        cuestionario.setCurso(curso);
+         
+        // Guardar en base de datos
+        return cuestionarioRepository.save(cuestionario);
+    }
+    
+    /**
+     * Guarda el progreso del cuestionario para un estudiante
+     * @param cuestionarioId ID del cuestionario
+     * @param estudianteId ID del estudiante
+     * @param respuestas Respuestas del estudiante
+     * @return Resultado parcial
+     */
+    @Transactional
+    public Resultado guardarProgreso(Long cuestionarioId, Long estudianteId, List<RespuestaEstudianteDto> respuestas) {
+        Optional<Cuestionario> cuestionarioOpt = cuestionarioRepository.findById(cuestionarioId);
+        if (cuestionarioOpt.isEmpty()) {
+            throw new RuntimeException("Cuestionario no encontrado");
+        }
+        
+        User estudiante = userRepository.findById(estudianteId)
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
+        
+        Cuestionario cuestionario = cuestionarioOpt.get();
+        List<Pregunta> preguntas = cuestionario.getPreguntas();
+        
+        if (preguntas == null || preguntas.isEmpty()) {
+            throw new RuntimeException("El cuestionario no tiene preguntas");
+        }
+        
+        // Calcular calificación parcial
+        int respuestasCorrectas = 0;
+        for (RespuestaEstudianteDto respuestaData : respuestas) {
+            Integer preguntaId = respuestaData.getPreguntaId();
+            
+            if (preguntaId != null) {
+                Pregunta pregunta = preguntas.stream()
+                    .filter(p -> p.getId().intValue() == preguntaId)
+                    .findFirst()
+                    .orElse(null);
+                
+                if (pregunta != null) {
+                    boolean esCorrecta = evaluarRespuesta(pregunta, respuestaData.getRespuesta());
+                    if (esCorrecta) {
+                        respuestasCorrectas++;
+                    }
+                }
+            }
+        }
+        
+        double calificacion = (double) respuestasCorrectas / preguntas.size() * 100;
+        
+        // Guardar resultado parcial en BD
+        Resultado resultado = new Resultado();
+        resultado.setCuestionario(cuestionario);
+        resultado.setEstudiante(estudiante);
+        resultado.setCalificacion(calificacion);
+        resultado.setCompletado(false); // Indicar que no está completado
+        
+        return resultadoRepository.save(resultado);
     }
 
     public Map<String, Object> responderCuestionario(Long id, EnviarCuestionarioDto respuestas) {
@@ -112,6 +198,7 @@ public class CuestionarioService {
         resultado.setCuestionario(cuestionario);
         resultado.setEstudiante(estudiante);
         resultado.setCalificacion(calificacion);
+        resultado.setCompletado(true); // Indicar que está completado
         resultadoRepository.save(resultado);
 
         Map<String, Object> response = new HashMap<>();
@@ -179,7 +266,7 @@ public class CuestionarioService {
                             })
                             .toList());
                         break;
-                        
+                    
                     case COMPLETAR_TEXTO:
                         // Respuestas de texto libre
                         preguntaMap.put("respuestasReferencia", pregunta.getRespuestas().stream()
@@ -236,6 +323,19 @@ public class CuestionarioService {
                             })
                             .toList());
                         break;
+                    
+                    default:
+                        // Para tipos no especificados, usar formato genérico
+                        preguntaMap.put("opciones", pregunta.getRespuestas().stream()
+                            .map(respuesta -> {
+                                Map<String, Object> respuestaMap = new HashMap<>();
+                                respuestaMap.put("id", respuesta.getId());
+                                respuestaMap.put("texto", respuesta.getTextoRespuesta());
+                                respuestaMap.put("esCorrecta", respuesta.getEsCorrecta());
+                                return respuestaMap;
+                            })
+                            .toList());
+                        break;
                 }
             } else {
                 preguntaMap.put("opciones", List.of());
@@ -273,7 +373,7 @@ public class CuestionarioService {
             case COMPLETAR_TEXTO:
                 // Las preguntas de completar texto pueden no tener respuestas definidas
                 return true;
-                
+                 
             case ARRASTRAR_SOLTAR:
             case ORDENAR_ELEMENTOS:
                 return pregunta.getConfiguracionAdicional() != null &&
@@ -314,7 +414,7 @@ public class CuestionarioService {
                         .anyMatch(r -> r.getId().equals(respuestaId) && r.getEsCorrecta());
                 }
                 return false;
-                
+                  
             case COMPLETAR_TEXTO:
                 if (respuestaEstudiante instanceof String) {
                     String textoIngresado = ((String) respuestaEstudiante).toLowerCase().trim();
@@ -326,7 +426,7 @@ public class CuestionarioService {
                         });
                 }
                 return false;
-                
+                  
             case ORDENAR_ELEMENTOS:
                 if (respuestaEstudiante instanceof List) {
                     @SuppressWarnings("unchecked")
@@ -338,23 +438,23 @@ public class CuestionarioService {
                     return ordenIngresado.equals(ordenCorrecto.stream().map(Long::intValue).toList());
                 }
                 return false;
-                
+                  
             case ARRASTRAR_SOLTAR:
                 if (respuestaEstudiante instanceof Map) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> asociaciones = (Map<String, Object>) respuestaEstudiante;
-                    
+                     
                     // Verificar todas las asociaciones correctas
                     for (Respuesta destino : pregunta.getRespuestas()) {
                         if ("destino".equals(destino.getGrupo())) {
                             Object elementoCorrecto = asociaciones.get("elemento_" + destino.getId());
                             Long elementoId = elementoCorrecto != null ? Long.valueOf(elementoCorrecto.toString()) : null;
-                            
+                             
                             // Buscar si la asociación es correcta
                             boolean esCorrecta = pregunta.getRespuestas().stream()
                                 .filter(r -> "origen".equals(r.getGrupo()))
                                 .anyMatch(r -> r.getId().equals(elementoId) && destino.getEsCorrecta());
-                                
+                                 
                             if (!esCorrecta) {
                                 return false;
                             }
@@ -363,7 +463,7 @@ public class CuestionarioService {
                     return true;
                 }
                 return false;
-                
+                  
             default:
                 return false;
         }

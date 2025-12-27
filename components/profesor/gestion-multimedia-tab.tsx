@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/lib/context/auth.context"
 import { multimediaService } from "@/lib/services/multimedia.service"
 import { coursesService } from "@/lib/services/courses.service"
+import { buildMediaUrl } from "@/lib/utils/media-urls"
 import { temasService } from "@/lib/services/temas.service"
 import type { MultimediaItem, Tema } from "@/lib/types"
 import { Upload, FileText, Image, Video, Music, Trash2, Download } from "lucide-react"
@@ -257,7 +258,7 @@ export function GestionMultimediaTab() {
                   <div className="flex items-center gap-3">
                     {getMultimediaIcon(item.tipo || 'documento')}
                     <div>
-                      <h4 className="font-medium">{item.url || 'Archivo multimedia'}</h4>
+                      <h4 className="font-medium">{item.nombreArchivo || 'Archivo multimedia'}</h4>
                       <p className="text-sm text-muted-foreground">
                         Tema ID: {item.temaId} | Tipo: {item.tipo}
                       </p>
