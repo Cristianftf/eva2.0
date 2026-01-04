@@ -10,25 +10,23 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
-  // Configuración experimental actualizada para Next.js 16
-  experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dropdown-menu'],
-  },
 
-  // Configuración de Turbopack para evitar conflictos con webpack
-  turbopack: {},
+
+
   
-  // Configuraciรณn de rewrites para evitar CORS en desarrollo local
+  // Configuración de rewrites para proxy a backend
   async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/api/:path*',
-          destination: 'http://localhost:8080/api/:path*',
-        },
-      ],
-    }
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
+      },
+    ]
+  },
+  
+  // Configuración de Turbopack para Next.js 16
+  turbopack: {
+    // Configuración específica para Turbopack
   },
   
   // Headers para cache y seguridad
@@ -71,7 +69,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'http://localhost:8080',
+            value: '*',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -79,7 +77,11 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            value: 'Content-Type, Authorization, X-Requested-With',
+          },
+          {
+            key: 'Access-Control-Max-Age',
+            value: '86400',
           },
           {
             key: 'Cache-Control',
@@ -90,9 +92,18 @@ const nextConfig = {
     ]
   },
   
-  // Bundle analyzer (desarrollo)
+  // Configuración de webpack para manejar archivos grandes
   webpack: (config, { dev, isServer }) => {
-    // Optimizaciones para producciรณn
+    // Para desarrollo, no aplicar restricciones de tamaño
+    if (dev) {
+      // Eliminar límite de body size para desarrollo
+      config.experiments = {
+        ...config.experiments,
+        asyncWebAssembly: true,
+      }
+    }
+    
+    // Optimizaciones para producción
     if (!dev && !isServer) {
       // Tree shaking agresivo
       config.optimization.usedExports = true

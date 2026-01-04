@@ -26,6 +26,12 @@ public class MultimediaItem {
     @Column(nullable = false)
     private String urlArchivo;
 
+    @Column
+    private Long tamañoArchivo; // Tamaño en bytes
+
+    @Column
+    private String mimeType; // MIME type real del archivo
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "tema_id", nullable = false)

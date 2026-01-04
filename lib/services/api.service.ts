@@ -155,7 +155,7 @@ class ApiService {
     })
   }
 
-  // Método especial para subir archivos
+  // Método especial para subir archivos con timeout extendido
   async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string>): Promise<ApiResponse<T>> {
     const token = this.getToken()
     const url = `${this.baseUrl}${endpoint}`
@@ -169,6 +169,11 @@ class ApiService {
       })
     }
 
+    // Timeout extendido para archivos grandes (5 minutos)
+    const uploadTimeout = 300000
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), uploadTimeout)
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -177,23 +182,49 @@ class ApiService {
         },
         body: formData,
         credentials: 'include',
+        signal: controller.signal,
       })
 
+      clearTimeout(timeoutId)
       const data = await response.json()
 
       if (!response.ok) {
+        // Manejar errores con el nuevo formato de respuesta
+        if (data && data.success === false) {
+          return {
+            success: false,
+            error: data.error || "Error al subir archivo",
+          }
+        }
         return {
           success: false,
           error: data.message || data.error || "Error al subir archivo",
         }
       }
 
+      // Manejar respuesta exitosa con el nuevo formato
+      if (data && data.success === true && data.data) {
+        return {
+          success: true,
+          data: data.data,
+        }
+      }
+
+      // Fallback para respuestas sin formato estándar
       return {
         success: true,
         data: data,
       }
     } catch (error) {
+      clearTimeout(timeoutId)
+      
       if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          return {
+            success: false,
+            error: "La subida ha excedido el tiempo de espera (5 minutos máximo)",
+          }
+        }
         return {
           success: false,
           error: error.message,
