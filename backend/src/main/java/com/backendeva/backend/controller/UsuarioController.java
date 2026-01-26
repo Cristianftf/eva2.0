@@ -70,21 +70,28 @@ public class UsuarioController {
     public ResponseEntity<?> deleteUsuario(@PathVariable Long id) {
         try {
             // Verificar si el usuario tiene cursos asociados antes de intentar eliminar
-            if (usuarioService.tieneCursosAsociados(id)) {
-                List<User> profesoresDisponibles = usuarioService.findByRole("PROFESOR");
-                profesoresDisponibles.removeIf(p -> p.getId().equals(id)); // Remover el usuario actual
-                
-                Map<String, Object> response = new HashMap<>();
-                response.put("error", "No se puede eliminar el usuario porque es profesor de cursos activos");
-                response.put("cursosAsociados", cursoService.getByProfesor(id).size());
-                response.put("solucion", "Transfiera los cursos a otro profesor antes de eliminar");
-                response.put("profesoresDisponibles", profesoresDisponibles.size());
-                
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-            }
+            boolean tieneCursos = usuarioService.tieneCursosAsociados(id);
             
+            // Obtener el usuario antes de eliminarlo/desactivarlo
+            User usuario = usuarioService.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+            
+            // Realizar la eliminación (soft delete si tiene cursos, hard delete si no)
             usuarioService.deleteById(id);
-            return ResponseEntity.noContent().build();
+            
+            // Retornar respuesta con información del resultado
+            Map<String, Object> response = new HashMap<>();
+            if (tieneCursos) {
+                response.put("message", "Usuario marcado como inactivo");
+                response.put("softDelete", true);
+                response.put("cursosAsociados", cursoService.getByProfesor(id).size());
+            } else {
+                response.put("message", "Usuario eliminado correctamente");
+                response.put("softDelete", false);
+            }
+            response.put("usuarioId", id);
+            
+            return ResponseEntity.ok(response);
             
         } catch (DataIntegrityViolationException e) {
             Map<String, Object> response = new HashMap<>();

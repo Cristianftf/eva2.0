@@ -130,10 +130,16 @@ export function UsuariosTab() {
       const result = await usuariosService.delete(String(usuarioToDelete.id))
 
       if (result.success) {
-        setUsuarios(usuarios.filter((u) => u.id !== usuarioToDelete.id))
+        const responseData = result.data as any
+        
+        // Recargar la lista de usuarios para obtener el estado actualizado
+        await loadUsuarios()
+        
         toast({
-          title: "Usuario eliminado",
-          description: "El usuario ha sido marcado como inactivo correctamente.",
+          title: responseData?.softDelete ? "Usuario desactivado" : "Usuario eliminado",
+          description: responseData?.softDelete
+            ? "El usuario ha sido marcado como inactivo correctamente."
+            : "El usuario ha sido eliminado correctamente.",
           variant: "default",
         })
         setDeleteDialogOpen(false)
@@ -246,32 +252,41 @@ export function UsuariosTab() {
 
     setSubmitting(true)
 
-    const result = await usuariosService.update(String(editingUsuario.id), {
-      nombre: formData.nombre,
-      apellido: formData.apellido,
-      email: formData.email,
-      rol: formData.rol,
-    })
-
-    if (result.success && result.data) {
-      setUsuarios(usuarios.map(u => u.id === editingUsuario.id ? result.data! : u))
-      setDialogOpen(false)
-      setEditingUsuario(null)
-      resetForm()
-      toast({
-        title: "Usuario actualizado",
-        description: "Los datos del usuario han sido actualizados correctamente.",
-        variant: "default",
+    try {
+      const result = await usuariosService.update(String(editingUsuario.id), {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        email: formData.email,
+        rol: formData.rol,
       })
-    } else {
+
+      if (result.success && result.data) {
+        // Actualizar el usuario en la lista local
+        setUsuarios(usuarios.map(u => u.id === editingUsuario.id ? result.data! : u))
+        setDialogOpen(false)
+        setEditingUsuario(null)
+        resetForm()
+        toast({
+          title: "Usuario actualizado",
+          description: "Los datos del usuario han sido actualizados correctamente.",
+          variant: "default",
+        })
+      } else {
+        toast({
+          title: "Error al actualizar",
+          description: result.error || "Error al actualizar el usuario",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
       toast({
-        title: "Error al actualizar",
-        description: result.error || "Error al actualizar el usuario",
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
         variant: "destructive",
       })
+    } finally {
+      setSubmitting(false)
     }
-
-    setSubmitting(false)
   }
 
   const resetForm = () => {
@@ -501,34 +516,13 @@ export function UsuariosTab() {
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(usuario)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(usuario)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta acción marcará al usuario como inactivo. Los datos se conservarán pero no podrá acceder al sistema.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteConfirm} disabled={deleting}>
-                                  {deleting ? (
-                                    <>
-                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      Eliminando...
-                                    </>
-                                  ) : (
-                                    "Eliminar"
-                                  )}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(usuario)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -603,6 +597,57 @@ export function UsuariosTab() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Diálogo de confirmación de eliminación */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {usuarioToDelete && (
+                  <>
+                    Estás a punto de eliminar a <strong>{usuarioToDelete.nombre} {usuarioToDelete.apellido}</strong>.
+                    {loadingCursosInfo ? (
+                      <span className="block mt-2">Verificando dependencias...</span>
+                    ) : cursosAsociadosInfo && cursosAsociadosInfo.cursosAsociados > 0 ? (
+                      <span className="block mt-2 text-destructive">
+                        Este usuario tiene {cursosAsociadosInfo.cursosAsociados} curso(s) asociado(s).
+                        Se marcará como inactivo.
+                      </span>
+                    ) : (
+                      <span className="block mt-2">
+                        Esta acción marcará al usuario como inactivo. Los datos se conservarán pero no podrá acceder al sistema.
+                      </span>
+                    )}
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setDeleteDialogOpen(false)
+                setUsuarioToDelete(null)
+                setCursosAsociadosInfo(null)
+              }}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={deleting || loadingCursosInfo}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  "Eliminar"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   )

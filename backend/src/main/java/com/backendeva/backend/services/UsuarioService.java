@@ -123,14 +123,23 @@ public class UsuarioService {
         User user = userRepository.findById(java.util.Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
-        user.setNombre(userDetails.getNombre());
-        user.setApellido(userDetails.getApellido());
-        user.setEmail(userDetails.getEmail());
-        user.setRol(userDetails.getRol());
-        user.setActivo(userDetails.isActivo());
-        user.setFechaRegistro(userDetails.getFechaRegistro());
-        user.setLastSeen(userDetails.getLastSeen());
-        user.setLastSeen(userDetails.getLastSeen());
+        // Solo actualizar campos que no son null en userDetails
+        if (userDetails.getNombre() != null) {
+            user.setNombre(userDetails.getNombre());
+        }
+        if (userDetails.getApellido() != null) {
+            user.setApellido(userDetails.getApellido());
+        }
+        if (userDetails.getEmail() != null) {
+            user.setEmail(userDetails.getEmail());
+        }
+        if (userDetails.getRol() != null) {
+            user.setRol(userDetails.getRol());
+        }
+        // Solo actualizar activo si se envía explícitamente (no usar el valor por defecto false)
+        // El campo activo se maneja por separado en operaciones específicas
+        
+        // No sobrescribir fechaRegistro ni lastSeen - estos campos se manejan automáticamente
 
         return userRepository.save(user);
     }
