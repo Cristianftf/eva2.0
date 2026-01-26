@@ -18,16 +18,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { recursosService } from "@/lib/services/recursos.service"
 import type { RecursoConfiable } from "@/lib/types"
 import { Plus, Edit, Trash2, Loader2, ExternalLink } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export function RecursosTab() {
   const [recursos, setRecursos] = useState<RecursoConfiable[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [recursoToDelete, setRecursoToDelete] = useState<RecursoConfiable | null>(null)
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
@@ -35,7 +48,9 @@ export function RecursosTab() {
     categoria: "",
   })
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [editingRecurso, setEditingRecurso] = useState<RecursoConfiable | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     loadRecursos()
@@ -45,12 +60,16 @@ export function RecursosTab() {
     setLoading(true)
     setError(null)
 
-    const result = await recursosService.getAll()
+    try {
+      const result = await recursosService.getAll()
 
-    if (result.success && result.data) {
-      setRecursos(result.data)
-    } else {
-      setError(result.error || "Error al cargar recursos")
+      if (result.success && result.data) {
+        setRecursos(result.data)
+      } else {
+        setError(result.error || "Error al cargar recursos")
+      }
+    } catch (err) {
+      setError("Error de conexión al cargar recursos")
     }
 
     setLoading(false)
@@ -60,21 +79,43 @@ export function RecursosTab() {
     e.preventDefault()
     setSubmitting(true)
 
-    const result = editingRecurso
-      ? await recursosService.update(editingRecurso.id, formData)
-      : await recursosService.create(formData)
+    try {
+      const result = editingRecurso
+        ? await recursosService.update(editingRecurso.id, formData)
+        : await recursosService.create(formData)
 
-    if (result.success && result.data) {
-      if (editingRecurso) {
-        setRecursos(recursos.map(r => r.id === editingRecurso.id ? result.data! : r))
+      if (result.success && result.data) {
+        if (editingRecurso) {
+          setRecursos(recursos.map(r => r.id === editingRecurso.id ? result.data! : r))
+          toast({
+            title: "Recurso actualizado",
+            description: "El recurso ha sido actualizado correctamente.",
+            variant: "default",
+          })
+        } else {
+          setRecursos([...recursos, result.data])
+          toast({
+            title: "Recurso creado",
+            description: "El nuevo recurso ha sido creado correctamente.",
+            variant: "default",
+          })
+        }
+        setDialogOpen(false)
+        resetForm()
+        setEditingRecurso(null)
       } else {
-        setRecursos([...recursos, result.data])
+        toast({
+          title: "Error",
+          description: result.error || `Error al ${editingRecurso ? 'actualizar' : 'crear'} recurso`,
+          variant: "destructive",
+        })
       }
-      setDialogOpen(false)
-      resetForm()
-      setEditingRecurso(null)
-    } else {
-      alert(result.error || `Error al ${editingRecurso ? 'actualizar' : 'crear'} recurso`)
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
+        variant: "destructive",
+      })
     }
 
     setSubmitting(false)
@@ -101,16 +142,42 @@ export function RecursosTab() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este recurso?")) return
+  const handleDeleteClick = (recurso: RecursoConfiable) => {
+    setRecursoToDelete(recurso)
+    setDeleteDialogOpen(true)
+  }
 
-    const result = await recursosService.delete(id)
+  const handleDeleteConfirm = async () => {
+    if (!recursoToDelete) return
 
-    if (result.success) {
-      setRecursos(recursos.filter((r) => r.id !== id))
-    } else {
-      alert(result.error || "Error al eliminar recurso")
+    setDeleting(true)
+    try {
+      const result = await recursosService.delete(recursoToDelete.id)
+
+      if (result.success) {
+        setRecursos(recursos.filter((r) => r.id !== recursoToDelete.id))
+        toast({
+          title: "Recurso eliminado",
+          description: "El recurso ha sido eliminado correctamente.",
+          variant: "default",
+        })
+        setDeleteDialogOpen(false)
+        setRecursoToDelete(null)
+      } else {
+        toast({
+          title: "Error al eliminar",
+          description: result.error || "Error al eliminar recurso",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
+        variant: "destructive",
+      })
     }
+    setDeleting(false)
   }
 
   return (
@@ -176,14 +243,17 @@ export function RecursosTab() {
                   </div>
                 </div>
                 <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
                   <Button type="submit" disabled={submitting}>
                     {submitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creando...
+                        {editingRecurso ? "Actualizando..." : "Creando..."}
                       </>
                     ) : (
-                      "Crear Recurso"
+                      editingRecurso ? "Actualizar Recurso" : "Crear Recurso"
                     )}
                   </Button>
                 </DialogFooter>
@@ -242,7 +312,7 @@ export function RecursosTab() {
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(recurso)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(recurso.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(recurso)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -254,6 +324,45 @@ export function RecursosTab() {
             </Table>
           </div>
         )}
+
+        {/* Diálogo de confirmación de eliminación */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar recurso?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {recursoToDelete && (
+                  <>
+                    Estás a punto de eliminar el recurso <strong>"{recursoToDelete.titulo}"</strong>.
+                    Esta acción no se puede deshacer.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setDeleteDialogOpen(false)
+                setRecursoToDelete(null)
+              }}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  "Eliminar"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   )

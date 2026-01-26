@@ -35,8 +35,25 @@ public class RecursoService {
         return recursoRepository.save(java.util.Objects.requireNonNull(recurso));
     }
 
-    public Recurso updateRecurso(Long id, Recurso recurso) {
-        recurso.setId(id);
+    public Recurso updateRecurso(Long id, Recurso recursoDetails) {
+        Recurso recurso = recursoRepository.findById(java.util.Objects.requireNonNull(id))
+                .orElseThrow(() -> new RuntimeException("Recurso no encontrado con id: " + id));
+        
+        // Solo actualizar campos que no son null
+        if (recursoDetails.getTitulo() != null) {
+            recurso.setTitulo(recursoDetails.getTitulo());
+        }
+        if (recursoDetails.getDescripcion() != null) {
+            recurso.setDescripcion(recursoDetails.getDescripcion());
+        }
+        if (recursoDetails.getUrl() != null) {
+            recurso.setUrl(recursoDetails.getUrl());
+        }
+        if (recursoDetails.getCategoria() != null) {
+            recurso.setCategoria(recursoDetails.getCategoria());
+        }
+        // No sobrescribir fechaAgregado - se mantiene la original
+        
         return recursoRepository.save(recurso);
     }
 
